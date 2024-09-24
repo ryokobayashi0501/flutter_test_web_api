@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_web_api/api_handler.dart';
+import 'package:flutter_web_api/edit_page.dart';
 import 'package:flutter_web_api/model.dart';
 
 class MainPage extends StatefulWidget {
@@ -30,8 +31,15 @@ class _MainPageState extends State<MainPage> {
       appBar: AppBar(
         title: const Text("FlutterApi"),
         centerTitle: true,
-        backgroundColor: Colors.teal,
+        backgroundColor: const Color.fromARGB(255, 11, 11, 11),
         foregroundColor: Colors.white,
+      ),
+      bottomNavigationBar: MaterialButton(
+        color: Colors.teal,
+        textColor: Colors.white,
+        padding: const EdgeInsets.all(20),
+        onPressed: getData,
+        child: const Text('Refresh')
       ),
       body: Column(
         children: [
@@ -39,6 +47,14 @@ class _MainPageState extends State<MainPage> {
           itemCount: data.length,
           itemBuilder: (BuildContext context, int index){
             return ListTile(
+              onTap: (){
+                Navigator.push(
+                  context, 
+                  MaterialPageRoute(
+                    builder: (context)=> EditPage(user: data[index]),
+                  ),
+                );
+              },
               leading: Text("${data[index].userId}"),
               title: Text(data[index].name),
               subtitle: Text(data[index].address),
