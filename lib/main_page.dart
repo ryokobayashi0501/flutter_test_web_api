@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_web_api/add_user.dart';
 import 'package:flutter_web_api/api_handler.dart';
 import 'package:flutter_web_api/edit_page.dart';
 import 'package:flutter_web_api/model.dart';
@@ -41,6 +42,16 @@ class _MainPageState extends State<MainPage> {
         onPressed: getData,
         child: const Text('Refresh')
       ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: const Color.fromARGB(255, 11, 11, 11),
+        foregroundColor: Colors.white,
+        onPressed: (){
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const AddUser(),
+          ),
+          );
+        },
+        child: const Icon(Icons.add),
+        ),
       body: Column(
         children: [
           ListView.builder(shrinkWrap: true,
@@ -57,7 +68,7 @@ class _MainPageState extends State<MainPage> {
               },
               leading: Text("${data[index].userId}"),
               title: Text(data[index].name),
-              subtitle: Text(data[index].address),
+              subtitle: Text(data[index].email),
             );
           },
           )

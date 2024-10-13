@@ -46,4 +46,23 @@ class ApiHandler {
 
     return response;
   }
+
+  Future<http.Response> addUser(User user) async{ //{required User user}
+    final uri = Uri.parse(baseUri);
+    late http.Response response;
+
+    try{
+      response = await http.post(
+        uri,
+        headers: <String, String>{
+            'Content-type' : 'application/json; charset=UTF-8'
+        },
+        body: json.encode(user.toJson()), //without .toJson is ok
+      );
+    }catch(e){
+      return response;
+    }
+
+    return response;
+  }
 }

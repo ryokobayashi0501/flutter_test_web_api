@@ -5,63 +5,56 @@ import 'package:flutter_web_api/model.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:http/http.dart' as http;
 
-class EditPage extends StatefulWidget {
-  final User user;
-  const EditPage({super.key, required this.user});
+class AddUser extends StatefulWidget {
+  const AddUser({super.key});
 
   @override
-  State<EditPage> createState() => _EditPageState();
+  State<AddUser> createState() => _AddUserState();
 }
 
-class _EditPageState extends State<EditPage> {
-  final _formKey = GlobalKey<FormBuilderState>();
-  ApiHandler apiHandler = ApiHandler();
-  late http.Response response;
+class _AddUserState extends State<AddUser> {
+final _formKey = GlobalKey<FormBuilderState>();
+ApiHandler apiHandler = ApiHandler();
+late http.Response response; //dosen't break
 
-  void UpdateDatta() async{
-    if(_formKey.currentState!.saveAndValidate()){
-      final data = _formKey.currentState!.value;
+void addUser() async{
+  if(_formKey.currentState!.saveAndValidate()){
+    final data = _formKey.currentState!.value;
 
-      final user = User(
-        userId: widget.user.userId,
-        name: data['name'],
-        email: data['address'], //change address to email
+    final user = User(
+      userId: 0, 
+      name: data['name'], 
+      email: data['address'],
       );
 
-      response = await apiHandler.updateUser(
-        userId: widget.user.userId, 
-        user: user
-        );
-    }
+      await apiHandler.addUser(user); //User: user(is also ok)
+  } //end of if statement
 
-    if(!mounted) return;
-    Navigator.pop(context);
-  }
+  if(!mounted) return;
+  Navigator.pop(context);
+}
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Edit Page"),
+        title: const Text("Add User"),
         centerTitle: true,
-        backgroundColor: Colors.teal,
+        backgroundColor: const Color.fromARGB(255, 11, 11, 11),
         foregroundColor: Colors.white,
       ),
       bottomNavigationBar: MaterialButton(
         color: Colors.teal,
         textColor: Colors.white,
         padding: const EdgeInsets.all(20),
-        onPressed: UpdateDatta,
-        child: const Text('Update')
+        onPressed: addUser,
+        child: const Text('Add')
       ),
       body: Padding(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(20),
         child: FormBuilder(
           key: _formKey,
-          initialValue: {
-            'name' : widget.user.name,
-            'address' : widget.user.email,
-          },
           child: Column(
             children: [
               FormBuilderTextField(
