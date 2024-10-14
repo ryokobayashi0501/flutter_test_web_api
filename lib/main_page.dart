@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_web_api/add_user.dart';
 import 'package:flutter_web_api/api_handler.dart';
 import 'package:flutter_web_api/edit_page.dart';
+import 'package:flutter_web_api/find_user.dart';
 import 'package:flutter_web_api/model.dart';
 
 class MainPage extends StatefulWidget {
@@ -17,6 +18,11 @@ class _MainPageState extends State<MainPage> {
 
   void getData() async{
     data = await apiHandler.getUserData();
+    setState(() {});
+  }
+
+  void deleteUser(int userId) async{
+    await apiHandler.deleteUser(userId: userId);
     setState(() {});
   }
 
@@ -42,35 +48,67 @@ class _MainPageState extends State<MainPage> {
         onPressed: getData,
         child: const Text('Refresh')
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color.fromARGB(255, 11, 11, 11),
-        foregroundColor: Colors.white,
-        onPressed: (){
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const AddUser(),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            heroTag: 1,
+            backgroundColor: const Color.fromARGB(255, 11, 11, 11),
+            foregroundColor: Colors.white,
+            onPressed: (){
+              Navigator.push(
+                context, 
+                MaterialPageRoute(
+                  builder: ((context) => const FindUser()),
+                ),
+              );
+            },
+            child: const Icon(Icons.search),
           ),
-          );
-        },
-        child: const Icon(Icons.add),
-        ),
+          const SizedBox(
+            height: 10,
+          ),
+          FloatingActionButton(
+            heroTag: 2,
+            backgroundColor: const Color.fromARGB(255, 11, 11, 11),
+            foregroundColor: Colors.white,
+            onPressed: (){
+              Navigator.push(
+                context, 
+                MaterialPageRoute(
+                  builder: (context) => const AddUser(),
+                ),
+              );
+            },
+            child: const Icon(Icons.add),
+          ),
+        ],
+      ),
       body: Column(
         children: [
           ListView.builder(shrinkWrap: true,
           itemCount: data.length,
-          itemBuilder: (BuildContext context, int index){
-            return ListTile(
-              onTap: (){
-                Navigator.push(
-                  context, 
-                  MaterialPageRoute(
-                    builder: (context)=> EditPage(user: data[index]),
-                  ),
-                );
-              },
-              leading: Text("${data[index].userId}"),
-              title: Text(data[index].name),
-              subtitle: Text(data[index].email),
-            );
-          },
+            itemBuilder: (BuildContext context, int index){
+              return ListTile(
+                onTap: (){
+                  Navigator.push(
+                    context, 
+                    MaterialPageRoute(
+                      builder: (context)=> EditPage(user: data[index]),
+                    ),
+                  );
+                },
+                leading: Text("${data[index].userId}"),
+                title: Text(data[index].name),
+                subtitle: Text(data[index].email),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete_outline),
+                  onPressed: (){
+                    deleteUser(data[index].userId);
+                  },
+                ),
+              );
+            },
           )
         ],
       ),

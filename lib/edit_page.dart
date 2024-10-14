@@ -25,7 +25,7 @@ class _EditPageState extends State<EditPage> {
       final user = User(
         userId: widget.user.userId,
         name: data['name'],
-        email: data['address'], //change address to email
+        email: data['email'], //change address to email
       );
 
       response = await apiHandler.updateUser(
@@ -60,7 +60,7 @@ class _EditPageState extends State<EditPage> {
           key: _formKey,
           initialValue: {
             'name' : widget.user.name,
-            'address' : widget.user.email,
+            'email' : widget.user.email,
           },
           child: Column(
             children: [
@@ -75,8 +75,8 @@ class _EditPageState extends State<EditPage> {
                 height: 10,
               ),
               FormBuilderTextField(
-                name: 'address',
-                decoration: const InputDecoration(labelText: 'Address'),
+                name: 'email',
+                decoration: const InputDecoration(labelText: 'email'),
                 validator: FormBuilderValidators.compose([
                   FormBuilderValidators.required(),
                 ],),

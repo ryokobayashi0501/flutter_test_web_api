@@ -24,7 +24,7 @@ void addUser() async{
     final user = User(
       userId: 0, 
       name: data['name'], 
-      email: data['address'],
+      email: data['email'],
       );
 
       await apiHandler.addUser(user); //User: user(is also ok)
@@ -68,8 +68,8 @@ void addUser() async{
                 height: 10,
               ),
               FormBuilderTextField(
-                name: 'address',
-                decoration: const InputDecoration(labelText: 'Address'),
+                name: 'email',
+                decoration: const InputDecoration(labelText: 'email'),
                 validator: FormBuilderValidators.compose([
                   FormBuilderValidators.required(),
                 ],),

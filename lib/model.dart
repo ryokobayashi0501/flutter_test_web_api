@@ -9,6 +9,12 @@ class User{
     required this.email
   });
 
+  const User.empty({
+    this.userId = 0,
+    this.name = '',
+    this.email = '',
+  });
+
   factory User.fromJson(Map<String, dynamic> json) => User(
         userId: json['userId'],
         name: json['name'],
