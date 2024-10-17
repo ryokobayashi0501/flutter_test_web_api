@@ -26,6 +26,8 @@ class _EditPageState extends State<EditPage> {
         userId: widget.user.userId,
         name: data['name'],
         email: data['email'], //change address to email
+        yearsOfExperience: int.parse(data['yearsOfExperience']),
+        averageScore: data['averageScore'],
       );
 
       response = await apiHandler.updateUser(
@@ -61,6 +63,9 @@ class _EditPageState extends State<EditPage> {
           initialValue: {
             'name' : widget.user.name,
             'email' : widget.user.email,
+            'yearsOfExperience' : widget.user.yearsOfExperience.toString(),
+            'averageScore' : widget.user.averageScore,
+
           },
           child: Column(
             children: [
@@ -71,12 +76,35 @@ class _EditPageState extends State<EditPage> {
                   FormBuilderValidators.required(),
                 ],),
               ),
+              
               const SizedBox(
                 height: 10,
               ),
               FormBuilderTextField(
                 name: 'email',
                 decoration: const InputDecoration(labelText: 'email'),
+                validator: FormBuilderValidators.compose([
+                  FormBuilderValidators.required(),
+                ],),
+              ),
+
+              const SizedBox(
+                height: 10,
+              ),
+              FormBuilderTextField(
+                name: 'yearsOfExperience',
+                decoration: const InputDecoration(labelText: 'yearsOfExperience'),
+                validator: FormBuilderValidators.compose([
+                  FormBuilderValidators.required(),
+                ],),
+              ),
+
+              const SizedBox(
+                height: 10,
+              ),
+              FormBuilderTextField(
+                name: 'averageScore',
+                decoration: const InputDecoration(labelText: 'averageScore'),
                 validator: FormBuilderValidators.compose([
                   FormBuilderValidators.required(),
                 ],),

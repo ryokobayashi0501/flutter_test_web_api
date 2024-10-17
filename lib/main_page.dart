@@ -16,20 +16,20 @@ class _MainPageState extends State<MainPage> {
   ApiHandler apiHandler = ApiHandler();
   late List<User> data = [];
 
-  void getData() async{
+  void getData() async {
     data = await apiHandler.getUserData();
     setState(() {});
   }
 
-  void deleteUser(int userId) async{
+  void deleteUser(int userId) async {
     await apiHandler.deleteUser(userId: userId);
-    setState(() {});
+    getData(); // データを更新
   }
 
   @override
-  void initState(){
-    getData();
+  void initState() {
     super.initState();
+    getData();
   }
 
   @override
@@ -46,7 +46,7 @@ class _MainPageState extends State<MainPage> {
         textColor: Colors.white,
         padding: const EdgeInsets.all(20),
         onPressed: getData,
-        child: const Text('Refresh')
+        child: const Text('Refresh'),
       ),
       floatingActionButton: Column(
         mainAxisAlignment: MainAxisAlignment.end,
@@ -55,9 +55,9 @@ class _MainPageState extends State<MainPage> {
             heroTag: 1,
             backgroundColor: const Color.fromARGB(255, 11, 11, 11),
             foregroundColor: Colors.white,
-            onPressed: (){
+            onPressed: () {
               Navigator.push(
-                context, 
+                context,
                 MaterialPageRoute(
                   builder: ((context) => const FindUser()),
                 ),
@@ -72,9 +72,9 @@ class _MainPageState extends State<MainPage> {
             heroTag: 2,
             backgroundColor: const Color.fromARGB(255, 11, 11, 11),
             foregroundColor: Colors.white,
-            onPressed: (){
+            onPressed: () {
               Navigator.push(
-                context, 
+                context,
                 MaterialPageRoute(
                   builder: (context) => const AddUser(),
                 ),
@@ -84,34 +84,95 @@ class _MainPageState extends State<MainPage> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          ListView.builder(shrinkWrap: true,
-          itemCount: data.length,
-            itemBuilder: (BuildContext context, int index){
-              return ListTile(
-                onTap: (){
-                  Navigator.push(
-                    context, 
-                    MaterialPageRoute(
-                      builder: (context)=> EditPage(user: data[index]),
+      body: data.isEmpty
+          ? const Center(
+              child: CircularProgressIndicator(),
+            )
+          : Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(8),
+                itemCount: data.length,
+                itemBuilder: (BuildContext context, int index) {
+                  return Card(
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    elevation: 3,
+                    child: ListTile(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => EditPage(user: data[index]),
+                          ),
+                        );
+                      },
+                      leading: CircleAvatar(
+                        child: Text(data[index].userId.toString()),
+                      ),
+                      title: Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: 'Name: ',
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            TextSpan(
+                              text: data[index].name,
+                            ),
+                          ],
+                        ),
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Text(
+                                'Email: ',
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              Expanded(
+                                child: Text(data[index].email),
+                              ),
+                            ],
+                          ),
+                          
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Text(
+                                'Years of Experience: ',
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              Text(data[index].yearsOfExperience.toString()),
+                            ],
+                          ),
+
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Text(
+                                'Average Score: ',
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              Expanded(
+                                child: Text(data[index].averageScore),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete_outline),
+                        onPressed: () {
+                          deleteUser(data[index].userId);
+                        },
+                      ),
                     ),
                   );
                 },
-                leading: Text("${data[index].userId}"),
-                title: Text(data[index].name),
-                subtitle: Text(data[index].email),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete_outline),
-                  onPressed: (){
-                    deleteUser(data[index].userId);
-                  },
-                ),
-              );
-            },
-          )
-        ],
-      ),
+              ),
+            ),
     );
   }
 }

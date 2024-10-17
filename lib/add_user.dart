@@ -25,6 +25,8 @@ void addUser() async{
       userId: 0, 
       name: data['name'], 
       email: data['email'],
+      yearsOfExperience: int.parse(data['yearsOfExperience']),
+      averageScore: data['averageScore'],
       );
 
       await apiHandler.addUser(user); //User: user(is also ok)
@@ -64,12 +66,35 @@ void addUser() async{
                   FormBuilderValidators.required(),
                 ],),
               ),
+              
               const SizedBox(
                 height: 10,
               ),
               FormBuilderTextField(
                 name: 'email',
                 decoration: const InputDecoration(labelText: 'email'),
+                validator: FormBuilderValidators.compose([
+                  FormBuilderValidators.required(),
+                ],),
+              ),
+
+              const SizedBox(
+                height: 10,
+              ),
+              FormBuilderTextField(
+                name: 'yearsOfExperience',
+                decoration: const InputDecoration(labelText: 'yearsOfExperience'),
+                validator: FormBuilderValidators.compose([
+                  FormBuilderValidators.required(),
+                ],),
+              ),
+
+              const SizedBox(
+                height: 10,
+              ),
+              FormBuilderTextField(
+                name: 'averageScore',
+                decoration: const InputDecoration(labelText: 'averageScore'),
                 validator: FormBuilderValidators.compose([
                   FormBuilderValidators.required(),
                 ],),
