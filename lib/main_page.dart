@@ -23,7 +23,7 @@ class _MainPageState extends State<MainPage> {
 
   void deleteUser(int userId) async {
     await apiHandler.deleteUser(userId: userId);
-    getData(); // データを更新
+    getData(); // Update Data
   }
 
   @override
