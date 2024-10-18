@@ -25,9 +25,14 @@ class _EditPageState extends State<EditPage> {
       final user = User(
         userId: widget.user.userId,
         name: data['name'],
+        username: data['username'],
         email: data['email'], //change address to email
         yearsOfExperience: int.parse(data['yearsOfExperience']),
         averageScore: data['averageScore'],
+        practiceFrequency: data['practiceFrequency'],
+        scoreGoal: int.parse(data['scoreGoal']),
+        puttingGoal: double.parse(data['puttingGoal']),
+        approachGoal: data['approachGoal'],
       );
 
       response = await apiHandler.updateUser(
@@ -62,9 +67,14 @@ class _EditPageState extends State<EditPage> {
           key: _formKey,
           initialValue: {
             'name' : widget.user.name,
+            'username' : widget.user.username,
             'email' : widget.user.email,
             'yearsOfExperience' : widget.user.yearsOfExperience.toString(),
-            'averageScore' : widget.user.averageScore,
+            'averageScore' : widget.user.averageScore.toString(),
+            'practiceFrequency' : widget.user.practiceFrequency.toString(),
+            'scoreGoal' : widget.user.scoreGoal.toString(),
+            'puttingGoal' : widget.user.puttingGoal.toString(),
+            'approachGoal' : widget.user.approachGoal,
 
           },
           child: Column(
@@ -76,7 +86,18 @@ class _EditPageState extends State<EditPage> {
                   FormBuilderValidators.required(),
                 ],),
               ),
-              
+
+              const SizedBox(
+                height: 10,
+              ),
+              FormBuilderTextField(
+                name: 'username',
+                decoration: const InputDecoration(labelText: 'username'),
+                validator: FormBuilderValidators.compose([
+                  FormBuilderValidators.required(),
+                ],),
+              ),
+
               const SizedBox(
                 height: 10,
               ),
@@ -105,6 +126,50 @@ class _EditPageState extends State<EditPage> {
               FormBuilderTextField(
                 name: 'averageScore',
                 decoration: const InputDecoration(labelText: 'averageScore'),
+                validator: FormBuilderValidators.compose([
+                  FormBuilderValidators.required(),
+                ],),
+              ),
+
+              const SizedBox(
+                height: 10,
+              ),
+              FormBuilderTextField(
+                name: 'practiceFrequency',
+                decoration: const InputDecoration(labelText: 'practiceFrequency'),
+                validator: FormBuilderValidators.compose([
+                  FormBuilderValidators.required(),
+                ],),
+              ),
+
+              const SizedBox(
+                height: 10,
+              ),
+              FormBuilderTextField(
+                name: 'scoreGoal',
+                decoration: const InputDecoration(labelText: 'scoreGoal'),
+                validator: FormBuilderValidators.compose([
+                  FormBuilderValidators.required(),
+                ],),
+              ),
+
+              const SizedBox(
+                height: 10,
+              ),
+              FormBuilderTextField(
+                name: 'puttingGoal',
+                decoration: const InputDecoration(labelText: 'puttingGoal'),
+                validator: FormBuilderValidators.compose([
+                  FormBuilderValidators.required(),
+                ],),
+              ),
+
+              const SizedBox(
+                height: 10,
+              ),
+              FormBuilderTextField(
+                name: 'approachGoal',
+                decoration: const InputDecoration(labelText: 'approachGoal'),
                 validator: FormBuilderValidators.compose([
                   FormBuilderValidators.required(),
                 ],),

@@ -13,29 +13,90 @@ class AddUser extends StatefulWidget {
 }
 
 class _AddUserState extends State<AddUser> {
-final _formKey = GlobalKey<FormBuilderState>();
-ApiHandler apiHandler = ApiHandler();
-late http.Response response; //dosen't break
+  final _formKey = GlobalKey<FormBuilderState>();
+  ApiHandler apiHandler = ApiHandler();
+  late List<User> existingUsers; // Keep existing user list
 
-void addUser() async{
-  if(_formKey.currentState!.saveAndValidate()){
-    final data = _formKey.currentState!.value;
+  void getData() async {
+    existingUsers = await apiHandler.getUserData(); // Get a list of existing users
+  }
 
-    final user = User(
-      userId: 0, 
-      name: data['name'], 
-      email: data['email'],
-      yearsOfExperience: int.parse(data['yearsOfExperience']),
-      averageScore: data['averageScore'],
+  @override
+  void initState() {
+    super.initState();
+    getData(); // Get existing data on initialization
+  }
+
+  void addUser() async {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      final data = _formKey.currentState!.value;
+
+      // Modify the part that converts to a number
+      int yearsOfExperience = int.tryParse(data['yearsOfExperience']) ?? 0;
+      int averageScore = int.tryParse(data['averageScore']) ?? 0;
+      int scoreGoal = int.tryParse(data['scoreGoal'].toString()) ?? 0;
+      double puttingGoal = double.tryParse(data['puttingGoal'].toString()) ?? 0.0;
+
+      // Custom Validation
+      if (scoreGoal >= averageScore) {
+        _showErrorDialog("Score Goal must be greater than Average Score.");
+        return;
+      }
+
+      bool usernameExists = existingUsers.any((user) => user.username == data['username']);
+      if (usernameExists) {
+        _showErrorDialog("Username already exists. Please use a different username.");
+        return;
+      }
+
+      bool emailExists = existingUsers.any((user) => user.email == data['email']);
+      if (emailExists) {
+        _showErrorDialog("Email already exists. Please use a different email address.");
+        return;
+      }
+
+      final user = User(
+        userId: 0,
+        name: data['name'],
+        username: data['username'],
+        email: data['email'],
+        yearsOfExperience: yearsOfExperience,
+        averageScore: averageScore,
+        practiceFrequency: data['practiceFrequency'],
+        scoreGoal: scoreGoal,
+        puttingGoal: puttingGoal,
+        approachGoal: data['approachGoal']
       );
 
-      await apiHandler.addUser(user); //User: user(is also ok)
-  } //end of if statement
+      await apiHandler.addUser(user);
 
-  if(!mounted) return;
-  Navigator.pop(context);
-}
+      if (!mounted) return;
+      Navigator.pop(context);
+    } else {
+      _showErrorDialog("Please correct the errors in the form.");
+    }
+  }
 
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Invalid Input"),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text("OK"),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +112,7 @@ void addUser() async{
         textColor: Colors.white,
         padding: const EdgeInsets.all(20),
         onPressed: addUser,
-        child: const Text('Add')
+        child: const Text('Add'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(20),
@@ -64,40 +125,94 @@ void addUser() async{
                 decoration: const InputDecoration(labelText: 'Name'),
                 validator: FormBuilderValidators.compose([
                   FormBuilderValidators.required(),
-                ],),
+                ]),
               ),
-              
-              const SizedBox(
-                height: 10,
+              const SizedBox(height: 10),
+              FormBuilderTextField(
+                name: 'username',
+                decoration: const InputDecoration(labelText: 'Username'),
+                validator: FormBuilderValidators.compose([
+                  FormBuilderValidators.required(),
+                ]),
               ),
+              const SizedBox(height: 10),
               FormBuilderTextField(
                 name: 'email',
-                decoration: const InputDecoration(labelText: 'email'),
+                decoration: const InputDecoration(labelText: 'Email'),
                 validator: FormBuilderValidators.compose([
                   FormBuilderValidators.required(),
-                ],),
+                  FormBuilderValidators.email(
+                      errorText: 'Please enter a valid email address'),
+                ]),
               ),
-
-              const SizedBox(
-                height: 10,
-              ),
+              const SizedBox(height: 10),
               FormBuilderTextField(
                 name: 'yearsOfExperience',
-                decoration: const InputDecoration(labelText: 'yearsOfExperience'),
+                decoration: const InputDecoration(labelText: 'Years of Experience'),
                 validator: FormBuilderValidators.compose([
                   FormBuilderValidators.required(),
-                ],),
+                  FormBuilderValidators.numeric(),
+                ]),
               ),
-
-              const SizedBox(
-                height: 10,
-              ),
+              const SizedBox(height: 10),
               FormBuilderTextField(
                 name: 'averageScore',
-                decoration: const InputDecoration(labelText: 'averageScore'),
+                decoration: const InputDecoration(labelText: 'Average Score'),
                 validator: FormBuilderValidators.compose([
                   FormBuilderValidators.required(),
-                ],),
+                  FormBuilderValidators.numeric(),
+                ]),
+              ),
+              const SizedBox(height: 10),
+              FormBuilderDropdown<int>(
+                name: 'practiceFrequency',
+                decoration: const InputDecoration(labelText: 'Practice Frequency'),
+                items: List.generate(7, (index) => index + 1)
+                    .map((number) => DropdownMenuItem(
+                          value: number,
+                          child: Text('$number'),
+                        ))
+                    .toList(),
+                validator: FormBuilderValidators.compose([
+                  FormBuilderValidators.required(),
+                ]),
+              ),
+              const SizedBox(height: 10),
+              FormBuilderDropdown<int>(
+                name: 'scoreGoal',
+                decoration: const InputDecoration(labelText: 'Score Goal (62-110)'),
+                items: List.generate(49, (index) => index + 62)
+                    .map((number) => DropdownMenuItem(
+                          value: number,
+                          child: Text('$number'),
+                        ))
+                    .toList(),
+                validator: FormBuilderValidators.compose([
+                  FormBuilderValidators.required(),
+                ]),
+              ),
+              const SizedBox(height: 10),
+              FormBuilderDropdown<double>(
+                name: 'puttingGoal',
+                decoration: const InputDecoration(labelText: 'Putting Goal (1.0 - 2.0)'),
+                items: List.generate(11, (index) => 1.0 + (index * 0.1))
+                    .map((value) => DropdownMenuItem(
+                          value: value,
+                          child: Text(value.toStringAsFixed(1)),
+                        ))
+                    .toList(),
+                validator: FormBuilderValidators.compose([
+                  FormBuilderValidators.required(),
+                ]),
+              ),
+
+              const SizedBox(height: 10),
+              FormBuilderTextField(
+                name: 'approachGoal',
+                decoration: const InputDecoration(labelText: 'approachGoal'),
+                validator: FormBuilderValidators.compose([
+                  FormBuilderValidators.required(),
+                ]),
               ),
             ],
           ),

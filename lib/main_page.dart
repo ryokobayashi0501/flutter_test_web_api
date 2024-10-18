@@ -128,6 +128,19 @@ class _MainPageState extends State<MainPage> {
                           Row(
                             children: [
                               Text(
+                                'User Name: ',
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              Expanded(
+                                child: Text(data[index].username),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Text(
                                 'Email: ',
                                 style: const TextStyle(fontWeight: FontWeight.bold),
                               ),
@@ -156,7 +169,53 @@ class _MainPageState extends State<MainPage> {
                                 style: const TextStyle(fontWeight: FontWeight.bold),
                               ),
                               Expanded(
-                                child: Text(data[index].averageScore),
+                                child: Text(data[index].averageScore.toString()),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Text(
+                                'Practice Frequency: ',
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              Text(data[index].practiceFrequency.toString()),
+                            ],
+                          ),
+
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Text(
+                                'Score Goal: ',
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              Text(data[index].scoreGoal.toString()),
+                            ],
+                          ),
+
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Text(
+                                'Putting Goal: ',
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              Text(data[index].puttingGoal.toString()),
+                            ],
+                          ),
+
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Text(
+                                'approachGoal: ',
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              Expanded(
+                                child: Text(data[index].email),
                               ),
                             ],
                           ),
