@@ -161,18 +161,42 @@ class _EditPageState extends State<EditPage> {
               ),
 
               const SizedBox(height: 10),
-              FormBuilderTextField(
+              FormBuilderDropdown<String>(
                 name: 'approachGoal',
                 decoration: const InputDecoration(labelText: 'Approach Goal'),
+                items: [
+                  'Chipping around the green',
+                  'Chip shots from the rough',
+                  'Bunker shots',
+                  'Approach shots under 50 yards',
+                  'Chip shots with a high ball',
+                  'Chip shots with spin',
+                ].map((approach) => DropdownMenuItem(
+                      value: approach,
+                      child: Text(approach),
+                    ))
+                    .toList(),
                 validator: FormBuilderValidators.compose([
                   FormBuilderValidators.required(),
                 ]),
               ),
 
               const SizedBox(height: 10),
-              FormBuilderTextField(
+              FormBuilderDropdown<String>(
                 name: 'shotGoal',
                 decoration: const InputDecoration(labelText: 'Shot Goal'),
+                items: [
+                  'Long shots',
+                  'Accurate iron shots',
+                  'Improve success rate on the green',
+                  'Improve fairway hit rate',
+                  'Hit a draw ball',
+                  'Hit a fade ball',
+                ].map((shot) => DropdownMenuItem(
+                      value: shot,
+                      child: Text(shot),
+                    ))
+                    .toList(),
                 validator: FormBuilderValidators.compose([
                   FormBuilderValidators.required(),
                 ]),
