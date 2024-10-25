@@ -66,7 +66,9 @@ class _AddUserState extends State<AddUser> {
         practiceFrequency: data['practiceFrequency'],
         scoreGoal: scoreGoal,
         puttingGoal: puttingGoal,
-        approachGoal: data['approachGoal']
+        approachGoal: data['approachGoal'],
+        shotGoal: data['shotGoal'],
+        passwordHash: data['passwordHash']
       );
 
       await apiHandler.addUser(user);
@@ -114,7 +116,7 @@ class _AddUserState extends State<AddUser> {
         onPressed: addUser,
         child: const Text('Add'),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: FormBuilder(
           key: _formKey,
@@ -127,6 +129,7 @@ class _AddUserState extends State<AddUser> {
                   FormBuilderValidators.required(),
                 ]),
               ),
+
               const SizedBox(height: 10),
               FormBuilderTextField(
                 name: 'username',
@@ -135,6 +138,7 @@ class _AddUserState extends State<AddUser> {
                   FormBuilderValidators.required(),
                 ]),
               ),
+
               const SizedBox(height: 10),
               FormBuilderTextField(
                 name: 'email',
@@ -145,6 +149,7 @@ class _AddUserState extends State<AddUser> {
                       errorText: 'Please enter a valid email address'),
                 ]),
               ),
+
               const SizedBox(height: 10),
               FormBuilderTextField(
                 name: 'yearsOfExperience',
@@ -154,6 +159,7 @@ class _AddUserState extends State<AddUser> {
                   FormBuilderValidators.numeric(),
                 ]),
               ),
+
               const SizedBox(height: 10),
               FormBuilderTextField(
                 name: 'averageScore',
@@ -163,6 +169,7 @@ class _AddUserState extends State<AddUser> {
                   FormBuilderValidators.numeric(),
                 ]),
               ),
+
               const SizedBox(height: 10),
               FormBuilderDropdown<int>(
                 name: 'practiceFrequency',
@@ -177,6 +184,7 @@ class _AddUserState extends State<AddUser> {
                   FormBuilderValidators.required(),
                 ]),
               ),
+
               const SizedBox(height: 10),
               FormBuilderDropdown<int>(
                 name: 'scoreGoal',
@@ -191,6 +199,7 @@ class _AddUserState extends State<AddUser> {
                   FormBuilderValidators.required(),
                 ]),
               ),
+
               const SizedBox(height: 10),
               FormBuilderDropdown<double>(
                 name: 'puttingGoal',
@@ -207,9 +216,51 @@ class _AddUserState extends State<AddUser> {
               ),
 
               const SizedBox(height: 10),
-              FormBuilderTextField(
+              FormBuilderDropdown<String>(
                 name: 'approachGoal',
-                decoration: const InputDecoration(labelText: 'approachGoal'),
+                decoration: const InputDecoration(labelText: 'Approach Goal'),
+                items: [
+                  'Chipping around the green',
+                  'Chip shots from the rough',
+                  'Bunker shots',
+                  'Approach shots under 50 yards',
+                  'Chip shots with a high ball',
+                  'Chip shots with spin',
+                ].map((approach) => DropdownMenuItem(
+                      value: approach,
+                      child: Text(approach),
+                    ))
+                    .toList(),
+                validator: FormBuilderValidators.compose([
+                  FormBuilderValidators.required(),
+                ]),
+              ),
+
+              const SizedBox(height: 10),
+              FormBuilderDropdown<String>(
+                name: 'shotGoal',
+                decoration: const InputDecoration(labelText: 'Shot Goal'),
+                items: [
+                  'Long shots',
+                  'Accurate iron shots',
+                  'Improve success rate on the green',
+                  'Improve fairway hit rate',
+                  'Hit a draw ball',
+                  'Hit a fade ball',
+                ].map((shot) => DropdownMenuItem(
+                      value: shot,
+                      child: Text(shot),
+                    ))
+                    .toList(),
+                validator: FormBuilderValidators.compose([
+                  FormBuilderValidators.required(),
+                ]),
+              ),
+
+              const SizedBox(height: 10),
+              FormBuilderTextField(
+                name: 'passwordHash',
+                decoration: const InputDecoration(labelText: 'Password'),
                 validator: FormBuilderValidators.compose([
                   FormBuilderValidators.required(),
                 ]),

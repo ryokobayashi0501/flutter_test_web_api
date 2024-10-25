@@ -9,6 +9,8 @@ class User{
   final int scoreGoal;
   final double puttingGoal;
   final String approachGoal;
+  final String shotGoal;
+  final String passwordHash;
 
   const User({
     required this.userId,
@@ -21,6 +23,8 @@ class User{
     required this.scoreGoal,
     required this.puttingGoal,
     required this.approachGoal,
+    required this.shotGoal,
+    required this.passwordHash
   });
 
   const User.empty({
@@ -34,6 +38,8 @@ class User{
     this.scoreGoal = 0,
     this.puttingGoal = 0.0,
     this.approachGoal = '',
+    this.shotGoal = '',
+    this.passwordHash = ''
   });
 
   factory User.fromJson(Map<String, dynamic> json) => User(
@@ -47,6 +53,8 @@ class User{
         scoreGoal: json['scoreGoal'],
         puttingGoal: json['puttingGoal'],
         approachGoal: json['approachGoal'],
+        shotGoal: json['shotGoal'],
+        passwordHash: json['passwordHash']
       );
 
   Map<String, dynamic> toJson()=>{
@@ -60,5 +68,7 @@ class User{
         "scoreGoal" : scoreGoal,
         "puttingGoal" : puttingGoal,
         "approachGoal" : approachGoal,
+        "shotGoal" : shotGoal,
+        "passwordHash" : passwordHash
       };
 }

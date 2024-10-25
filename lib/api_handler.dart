@@ -4,7 +4,7 @@ import 'package:flutter_web_api/model.dart';
 import 'package:http/http.dart' as http;
 
 class ApiHandler {
-  final String baseUri = "https://localhost:7088/api/users";
+  final String baseUri = "https://localhost:7287/api/users";
 
   Future<List<User>> getUserData() async {
     List<User> data = [];
