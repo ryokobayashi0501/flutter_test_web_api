@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
-import 'package:flutter_web_api/api_handler.dart';
-import 'package:flutter_web_api/model.dart';
+import 'package:flutter_web_api/Mains/api_handler.dart';
+import 'package:flutter_web_api/Models/user_model.dart';
+import 'package:flutter_web_api/Models/users_model.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:http/http.dart' as http;
 
@@ -65,7 +66,7 @@ class _AddUserState extends State<AddUser> {
         averageScore: averageScore,
         practiceFrequency: data['practiceFrequency'],
         scoreGoal: scoreGoal,
-        puttingGoal: puttingGoal,
+        puttingGoal: data['puttingGoal'],
         approachGoal: data['approachGoal'],
         shotGoal: data['shotGoal'],
         passwordHash: data['passwordHash']

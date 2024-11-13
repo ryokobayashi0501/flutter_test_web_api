@@ -1,4 +1,4 @@
-class User{
+class UserDTO{
   final int userId;
   final String name;
   final String username;
@@ -7,12 +7,12 @@ class User{
   final int averageScore;
   final int practiceFrequency;
   final int scoreGoal;
-  final double puttingGoal;
+  final String puttingGoal;
   final String approachGoal;
   final String shotGoal;
   final String passwordHash;
 
-  const User({
+  const UserDTO({
     required this.userId,
     required this.name,
     required this.username,
@@ -27,7 +27,7 @@ class User{
     required this.passwordHash
   });
 
-  const User.empty({
+  const UserDTO.empty({
     this.userId = 0,
     this.name = '',
     this.username = '',
@@ -36,13 +36,13 @@ class User{
     this.averageScore = 0,
     this.practiceFrequency = 0,
     this.scoreGoal = 0,
-    this.puttingGoal = 0.0,
+    this.puttingGoal ='',
     this.approachGoal = '',
     this.shotGoal = '',
     this.passwordHash = ''
   });
 
-  factory User.fromJson(Map<String, dynamic> json) => User(
+  factory UserDTO.fromJson(Map<String, dynamic> json) => UserDTO(
         userId: json['userId'],
         name: json['name'],
         username: json['username'],

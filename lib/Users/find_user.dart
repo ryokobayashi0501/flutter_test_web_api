@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_web_api/api_handler.dart';
-import 'package:flutter_web_api/model.dart';
+import 'package:flutter_web_api/Mains/api_handler.dart';
+import 'package:flutter_web_api/Models/user_model.dart';
 
 class FindUser extends StatefulWidget {
   const FindUser({super.key});
@@ -64,7 +64,7 @@ void getUserByName(String name) async {
             textColor: Colors.white,
             padding: const EdgeInsets.all(20),
             onPressed: () {
-              getUserById(int.parse(idController.text));
+              getUserById(int.parse(idController.text) ?? 0);
             },
             child: const Text('Find by ID'),
           ),
