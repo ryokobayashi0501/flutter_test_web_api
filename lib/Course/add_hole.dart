@@ -1,7 +1,9 @@
+// lib/Course/add_hole.dart
+import 'dart:convert'; // Added to use JSON
 import 'package:flutter/material.dart';
-import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_web_api/Mains/api_handler.dart';
 import 'package:flutter_web_api/Models/hole_model.dart';
+import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 
 class AddHole extends StatefulWidget {
@@ -22,55 +24,75 @@ class _AddHoleState extends State<AddHole> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("ホール追加"),
+        title: const Text("Add a hole"),
         centerTitle: true,
         backgroundColor: Colors.green,
-        foregroundColor: Colors.white,
       ),
-      bottomNavigationBar: MaterialButton(
-        color: Colors.green,
-        textColor: Colors.white,
-        padding: const EdgeInsets.all(20),
-        onPressed: isSubmitting ? null : addHole,
-        child: isSubmitting
-            ? const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              )
-            : const Text('ホールを追加'),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: ElevatedButton(
+          onPressed: isSubmitting ? null : addHole,
+          child: isSubmitting
+              ? const CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                )
+              : const Text('Add a hole'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.green, // Button background color
+            foregroundColor: Colors.white, // Button text color
+          ),
+        ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16.0),
         child: FormBuilder(
           key: _formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               FormBuilderTextField(
                 name: 'holeNumber',
-                decoration: const InputDecoration(labelText: 'ホール番号'),
+                decoration: const InputDecoration(
+                  labelText: 'Hole Number',
+                  border: OutlineInputBorder(),
+                ),
                 keyboardType: TextInputType.number,
+                initialValue: '1',
                 validator: FormBuilderValidators.compose([
-                  FormBuilderValidators.required(errorText: 'ホール番号を入力してください'),
-                  FormBuilderValidators.numeric(errorText: '数値を入力してください'),
-                  FormBuilderValidators.min(1, errorText: '1以上の数値を入力してください'),
-                  FormBuilderValidators.max(18, errorText: '18以下の数値を入力してください'),
+                  FormBuilderValidators.required(errorText: 'Please enter the hole number'),
+                  FormBuilderValidators.integer(errorText: 'Please enter an integer'),
+                  FormBuilderValidators.min(1, errorText: 'Hole number is 1 or higher'),
                 ]),
               ),
+              const SizedBox(height: 20),
               FormBuilderTextField(
                 name: 'par',
-                decoration: const InputDecoration(labelText: 'パー'),
+                decoration: const InputDecoration(
+                  labelText: 'Par',
+                  border: OutlineInputBorder(),
+                ),
                 keyboardType: TextInputType.number,
+                initialValue: '4',
                 validator: FormBuilderValidators.compose([
-                  FormBuilderValidators.required(errorText: 'パーを入力してください'),
-                  FormBuilderValidators.numeric(errorText: '数値を入力してください'),
+                  FormBuilderValidators.required(errorText: 'Please enter the par'),
+                  FormBuilderValidators.integer(errorText: 'Please enter an integer'),
+                  FormBuilderValidators.min(3, errorText: 'Minimum par is 3'),
+                  FormBuilderValidators.max(5, errorText: 'Maximum par is 5'),
                 ]),
               ),
+              const SizedBox(height: 20),
               FormBuilderTextField(
                 name: 'yardage',
-                decoration: const InputDecoration(labelText: 'ヤーデージ'),
+                decoration: const InputDecoration(
+                  labelText: 'Yardage',
+                  border: OutlineInputBorder(),
+                ),
                 keyboardType: TextInputType.number,
+                initialValue: '400',
                 validator: FormBuilderValidators.compose([
-                  FormBuilderValidators.required(errorText: 'ヤーデージを入力してください'),
-                  FormBuilderValidators.numeric(errorText: '数値を入力してください'),
+                  FormBuilderValidators.required(errorText: 'Please enter the yardage'),
+                  FormBuilderValidators.integer(errorText: 'Please enter an integer'),
+                  FormBuilderValidators.min(100, errorText: 'Yardage must be at least 100'),
                 ]),
               ),
             ],
@@ -80,52 +102,49 @@ class _AddHoleState extends State<AddHole> {
     );
   }
 
+  // The addHole method in add_hole.dart
   void addHole() async {
     if (_formKey.currentState?.saveAndValidate() ?? false) {
       setState(() {
         isSubmitting = true;
       });
 
-      final data = _formKey.currentState!.value;
+      final formData = _formKey.currentState!.value;
+      final holeNumber = int.parse(formData['holeNumber']);
+      final par = int.parse(formData['par']);
+      final yardage = int.parse(formData['yardage']);
 
-      // 新しいホールを作成
-      final hole = Hole(
-        holeId: 0, // 新規のため0を設定
+      Hole newHole = Hole(
+        holeId: null, // Set to null
         courseId: widget.courseId,
-        holeNumber: int.parse(data['holeNumber']),
-        par: int.parse(data['par']),
-        yardage: int.parse(data['yardage']),
+        holeNumber: holeNumber,
+        par: par,
+        yardage: yardage,
       );
 
-      // API リクエストを実行
       try {
-        final response = await apiHandler.addHoleForCourse(widget.courseId, hole); // 修正
-
+        final response = await apiHandler.addHoleForCourse(widget.courseId, newHole);
         if (response.statusCode >= 200 && response.statusCode <= 299) {
-          // 成功
-          print("Hole added successfully");
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('ホールが追加されました')),
+            const SnackBar(content: Text('Hole added successfully')),
           );
           Navigator.pop(context);
         } else {
-          // エラーが発生した場合
           print("Failed to add hole: ${response.statusCode}");
-          print("Error body: ${response.body}");
-          _showErrorDialog("ホールの追加に失敗しました。再度お試しください。");
+          print("Response body: ${response.body}");
+          _showErrorDialog("Failed to add hole. Please try again.");
         }
       } catch (e) {
-        // ネットワークエラーなどをキャッチ
         print("Error adding hole: $e");
-        _showErrorDialog("ホールの追加中にエラーが発生しました。接続を確認して再度お試しください。");
+        _showErrorDialog("An error occurred while adding the hole. Please check your connection and try again.");
       } finally {
         setState(() {
           isSubmitting = false;
         });
       }
     } else {
-      _showErrorDialog("フォームのエラーを修正してください。");
+      _showErrorDialog("Please correct the errors in the form.");
     }
   }
 
@@ -135,7 +154,7 @@ class _AddHoleState extends State<AddHole> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text("入力エラー"),
+          title: const Text("Input Error"),
           content: Text(message),
           actions: [
             TextButton(

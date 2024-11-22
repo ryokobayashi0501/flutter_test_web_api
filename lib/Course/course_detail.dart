@@ -1,9 +1,10 @@
+// lib/Pages/course_detail.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_web_api/Mains/api_handler.dart';
 import 'package:flutter_web_api/Models/course_model.dart';
 import 'package:flutter_web_api/Models/hole_model.dart';
-import 'package:flutter_web_api/Course/add_hole.dart';
-import 'package:flutter_web_api/Course/edit_hole.dart';
+import 'package:flutter_web_api/Course/add_hole.dart'; // 修正
+import 'package:flutter_web_api/Course/edit_hole.dart'; // 修正
 
 class CourseDetail extends StatefulWidget {
   final Course course;
@@ -29,7 +30,7 @@ class _CourseDetailState extends State<CourseDetail> {
     setState(() {
       isLoading = true;
     });
-    holes = await apiHandler.getHolesByCourseId(widget.course.courseId);
+    holes = await apiHandler.getHolesByCourseId(widget.course.courseId!);
     setState(() {
       isLoading = false;
     });
@@ -40,7 +41,7 @@ class _CourseDetailState extends State<CourseDetail> {
       context,
       MaterialPageRoute(
         builder: (context) => AddHole(
-          courseId: widget.course.courseId,
+          courseId: widget.course.courseId!,
         ),
       ),
     );
@@ -58,7 +59,7 @@ class _CourseDetailState extends State<CourseDetail> {
   }
 
   void deleteHole(int holeId) async {
-    final response = await apiHandler.deleteHole(widget.course.courseId, holeId);
+    final response = await apiHandler.deleteHole(widget.course.courseId!, holeId);
     if (response.statusCode >= 200 && response.statusCode <= 299) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('ホールが削除されました')),
@@ -103,6 +104,7 @@ class _CourseDetailState extends State<CourseDetail> {
       floatingActionButton: FloatingActionButton(
         onPressed: navigateToAddHole,
         child: const Icon(Icons.add),
+        backgroundColor: Colors.green, // ボタンの色を設定
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -122,10 +124,18 @@ class _CourseDetailState extends State<CourseDetail> {
                             IconButton(
                               icon: const Icon(Icons.edit),
                               onPressed: () => navigateToEditHole(hole),
+                              color: Colors.blue,
                             ),
                             IconButton(
                               icon: const Icon(Icons.delete),
-                              onPressed: () => deleteHole(hole.holeId),
+                              onPressed: () {
+                                if (hole.holeId != null) {
+                                  deleteHole(hole.holeId!); // 非nullableに変換
+                                } else {
+                                  _showErrorDialog("ホールIDが存在しません。");
+                                }
+                              },
+                                color: Colors.red,
                             ),
                           ],
                         ),

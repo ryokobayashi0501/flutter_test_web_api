@@ -4,8 +4,8 @@ import 'package:flutter_web_api/Models/course_model.dart';
 import 'package:flutter_web_api/Users/edit_page.dart';
 import 'package:flutter_web_api/Mains/api_handler.dart';
 import 'package:flutter_web_api/Course/course_detail.dart'; // CourseDetailをインポート
-import 'package:flutter_web_api/Round/add_round.dart'; // コース追加ページをインポート
-import 'package:flutter_web_api/Round/edit_course_page.dart'; // コース編集ページをインポート
+import 'package:flutter_web_api/Course/add_course.dart'; // コース追加ページをインポート
+import 'package:flutter_web_api/Course/edit_course.dart'; // コース編集ページをインポート
 
 class UserPage extends StatefulWidget {
   final User user;
@@ -177,7 +177,7 @@ class _UserPageState extends State<UserPage> {
                                                 TextButton(
                                                   onPressed: () {
                                                     Navigator.of(context).pop();
-                                                    deleteCourse(data[index].courseId);
+                                                    deleteCourse(data[index].courseId!);
                                                   },
                                                   child: const Text("Delete", style: TextStyle(color: Colors.red)),
                                                 ),

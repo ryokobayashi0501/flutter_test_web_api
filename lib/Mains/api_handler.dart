@@ -7,13 +7,13 @@ import 'package:flutter_web_api/Models/hole_model.dart';
 import 'package:http/http.dart' as http;
 
 class ApiHandler {
-  final String baseUri = "https://localhost:7287/api/users";
+  final String baseUri = "https://localhost:7287/api";
 
  Future<List<User>> getUserData() async {
     List<UserDTO> dtoData = [];
     List<User> userData = [];
 
-    final uri = Uri.parse(baseUri);
+    final uri = Uri.parse("$baseUri/users");
     try {
       final response = await http.get(
         uri,
@@ -55,7 +55,7 @@ class ApiHandler {
   }
 
   Future<http.Response> updateUser({required int userId, required User user}) async {
-    final uri = Uri.parse("$baseUri/$userId");
+    final uri = Uri.parse("$baseUri/users/$userId");
     late http.Response response;
 
     try {
@@ -194,10 +194,11 @@ class ApiHandler {
     return response;
   }
 
+  // コースを取得するAPI
   Future<List<Course>> getCoursesByUserId(int userId) async {
     List<Course> courses = [];
 
-    final uri = Uri.parse("https://localhost:7287/api/Courses/user/$userId");
+    final uri = Uri.parse("$baseUri/Courses/user/$userId");
     try {
       final response = await http.get(
         uri,
@@ -206,16 +207,9 @@ class ApiHandler {
         },
       );
 
-      print("Response status: ${response.statusCode}");
-      print("Response body: ${response.body}");
-
       if (response.statusCode >= 200 && response.statusCode <= 299) {
         final List<dynamic> jsonData = json.decode(response.body);
-        if (jsonData.isNotEmpty) {
-          courses = jsonData.map((json) => Course.fromJson(json)).toList();
-        } else {
-          print("No courses found for user ID: $userId");
-        }
+        courses = jsonData.map((json) => Course.fromJson(json)).toList();
       } else {
         print("Failed to fetch courses: ${response.statusCode}, ${response.reasonPhrase}");
       }
@@ -225,85 +219,103 @@ class ApiHandler {
     return courses;
   }
 
-
-  Future<http.Response> addCourseForUser(int userId, Course course) async {
-  final uri = Uri.parse("https://localhost:7287/api/Courses/user/$userId");
+  // コースを追加するAPI
+  Future<http.Response> addCourseForUser(int userId, String courseName, List<Hole> holes) async {
+  final uri = Uri.parse("$baseUri/Courses/user/$userId");
   late http.Response response;
+
+  // コースデータを作成
+  Course newCourse = Course(
+    courseId: null,
+    courseName: courseName,
+    holes: holes,
+  );
 
   try {
     response = await http.post(
       uri,
       headers: <String, String>{
-        'Content-type': 'application/json; charset=UTF-8',
+        'Content-Type': 'application/json; charset=UTF-8',
+        // 必要に応じて認証トークンを追加する
+        //'Authorization': 'Bearer <your_access_token>',
       },
-      body: json.encode(course.toJson()),
+      body: json.encode(newCourse.toJson()),
     );
 
     if (response.statusCode == 201) {
-      print("Course and related round added successfully");
+      print("Course added successfully");
     } else {
       print("Failed to add course: ${response.statusCode}");
-    }
-  } catch (e) {
-    print("Error adding course: $e");
-  }
-
-  return response;
-}
-
-Future<http.Response> updateCourse(Course course) async {
-  final uri = Uri.parse("https://localhost:7287/api/courses/${course.courseId}");
-  late http.Response response;
-
-  try {
-    response = await http.put(
-      uri,
-      headers: <String, String>{
-        'Content-type': 'application/json; charset=UTF-8',
-      },
-      body: json.encode(course.toJson()),
-    );
-
-    if (response.statusCode >= 200 && response.statusCode <= 299) {
-      print("Course updated successfully");
-    } else {
-      print("Failed to update course: ${response.statusCode}");
-    }
-  } catch (e) {
-    print("Error updating course: $e");
-  }
-
-  return response;
-}
-
-Future<http.Response> deleteCourse(int courseId) async {
-  final uri = Uri.parse("https://localhost:7287/api/courses/$courseId");
-  late http.Response response;
-
-  try {
-    response = await http.delete(
-      uri,
-      headers: <String, String>{
-        'Content-type': 'application/json; charset=UTF-8',
-      },
-    );
-    if (response.statusCode >= 200 && response.statusCode <= 299) {
-      print("Course deleted successfully");
-    } else {
-      print("Failed to delete course: ${response.statusCode}");
       print("Response body: ${response.body}");
     }
   } catch (e) {
-    print("Error deleting course: $e");
+    print("Error adding course: $e");
+    rethrow;
   }
 
   return response;
 }
+
+
+
+  // コースを編集するAPI
+  Future<http.Response> updateCourse(Course course) async {
+    final uri = Uri.parse("$baseUri/Courses/${course.courseId}");
+    late http.Response response;
+
+    try {
+      response = await http.put(
+        uri,
+        headers: <String, String>{
+          'Content-type': 'application/json; charset=UTF-8',
+        },
+        body: json.encode(course.toJson()),
+      );
+
+      if (response.statusCode >= 200 && response.statusCode <= 299) {
+        print("Course updated successfully");
+      } else {
+        print("Failed to update course: ${response.statusCode}");
+        print("Response body: ${response.body}");
+      }
+    } catch (e) {
+      print("Error updating course: $e");
+      rethrow; // 例外を再スロー
+    }
+
+    return response;
+  }
+
+  // コースを削除するAPI
+  Future<http.Response> deleteCourse(int courseId) async {
+    final uri = Uri.parse("$baseUri/Courses/$courseId");
+    late http.Response response;
+
+    try {
+      response = await http.delete(
+        uri,
+        headers: <String, String>{
+          'Content-type': 'application/json; charset=UTF-8',
+        },
+      );
+      if (response.statusCode >= 200 && response.statusCode <= 299) {
+        print("Course deleted successfully");
+      } else {
+        print("Failed to delete course: ${response.statusCode}");
+        print("Response body: ${response.body}");
+      }
+    } catch (e) {
+      print("Error deleting course: $e");
+      rethrow; // 例外を再スロー
+    }
+
+    return response;
+  }
 
   // ホールを取得するAPI
   Future<List<Hole>> getHolesByCourseId(int courseId) async {
     List<Hole> holes = [];
-    final uri = Uri.parse("https://localhost:7287/api/Courses/$courseId/Holes"); // 修正
+    final uri = Uri.parse("$baseUri/Courses/$courseId/Holes");
 
     try {
       final response = await http.get(
@@ -327,37 +339,42 @@ Future<http.Response> deleteCourse(int courseId) async {
   }
 
   // ホールを追加するAPI
-  Future<http.Response> addHoleForCourse(int courseId, Hole hole) async { // 修正
-    final uri = Uri.parse("https://localhost:7287/api/Courses/$courseId/Holes"); // 修正
-    late http.Response response;
+  // api_handler.dart
+Future<http.Response> addHoleForCourse(int courseId, Hole hole) async {
+  final uri = Uri.parse("$baseUri/Courses/$courseId/Holes");
+  late http.Response response;
 
-    try {
-      response = await http.post(
-        uri,
-        headers: <String, String>{
-          'Content-type': 'application/json; charset=UTF-8',
-        },
-        body: json.encode(hole.toJson()),
-      );
+  try {
+    String holeJson = json.encode(hole.toJson());
+    print("Sending Hole JSON: $holeJson"); // デバッグ用
 
-      if (response.statusCode >= 200 && response.statusCode <= 299) {
-        print("Hole added successfully");
-      } else {
-        print("Failed to add hole: ${response.statusCode}");
-        print("Response body: ${response.body}"); // エラー内容を表示
-      }
-    } catch (e) {
-      print("Error adding hole: $e");
-      // responseは初期化されていないため、例外を再スローまたは適切に処理する必要があります。
-      rethrow; // または return http.Response('', 500);
+    response = await http.post(
+      uri,
+      headers: <String, String>{
+        'Content-type': 'application/json; charset=UTF-8',
+      },
+      body: holeJson,
+    );
+
+    if (response.statusCode >= 200 && response.statusCode <= 299) {
+      print("Hole added successfully");
+    } else {
+      print("Failed to add hole: ${response.statusCode}");
+      print("Response body: ${response.body}");
     }
-
-    return response;
+  } catch (e) {
+    print("Error adding hole: $e");
+    rethrow; // 例外を再スロー
   }
+
+  return response;
+}
+
+
 
   // ホールを更新するAPI
   Future<http.Response> updateHole(Hole hole) async {
-    final uri = Uri.parse("https://localhost:7287/api/Courses/${hole.courseId}/Holes/${hole.holeId}"); // 修正
+    final uri = Uri.parse("$baseUri/Courses/${hole.courseId}/Holes/${hole.holeId}");
     late http.Response response;
 
     try {
@@ -377,15 +394,15 @@ Future<http.Response> deleteCourse(int courseId) async {
       }
     } catch (e) {
       print("Error updating hole: $e");
-      rethrow; // または return http.Response('', 500);
+      rethrow; // 例外を再スロー
     }
 
     return response;
   }
 
   // ホールを削除するAPI
-  Future<http.Response> deleteHole(int courseId, int holeId) async { // 修正
-    final uri = Uri.parse("https://localhost:7287/api/Courses/$courseId/Holes/$holeId"); // 修正
+  Future<http.Response> deleteHole(int courseId, int holeId) async {
+    final uri = Uri.parse("$baseUri/Courses/$courseId/Holes/$holeId");
     late http.Response response;
 
     try {
@@ -403,7 +420,7 @@ Future<http.Response> deleteCourse(int courseId) async {
       }
     } catch (e) {
       print("Error deleting hole: $e");
-      rethrow; // または return http.Response('', 500);
+      rethrow; // 例外を再スロー
     }
 
     return response;

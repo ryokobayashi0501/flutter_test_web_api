@@ -1,7 +1,9 @@
+// lib/Course/edit_hole.dart
+import 'dart:convert'; // json を使用するために追加
 import 'package:flutter/material.dart';
-import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_web_api/Mains/api_handler.dart';
 import 'package:flutter_web_api/Models/hole_model.dart';
+import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 
 class EditHole extends StatefulWidget {
@@ -24,58 +26,63 @@ class _EditHoleState extends State<EditHole> {
       appBar: AppBar(
         title: const Text("ホール編集"),
         centerTitle: true,
-        backgroundColor: Colors.green,
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.orange,
       ),
-      bottomNavigationBar: MaterialButton(
-        color: Colors.green,
-        textColor: Colors.white,
-        padding: const EdgeInsets.all(20),
-        onPressed: isSubmitting ? null : updateHole,
-        child: isSubmitting
-            ? const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              )
-            : const Text('ホールを更新'),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: ElevatedButton(
+          onPressed: isSubmitting ? null : updateHole,
+          child: isSubmitting
+              ? const CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                )
+              : const Text('ホールを更新'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.orange, // ボタンの背景色
+            foregroundColor: Colors.white, // ボタンのテキスト色
+          ),
+        ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16.0),
         child: FormBuilder(
           key: _formKey,
-          initialValue: {
-            'holeNumber': widget.hole.holeNumber.toString(),
-            'par': widget.hole.par.toString(),
-            'yardage': widget.hole.yardage.toString(),
-          },
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              FormBuilderTextField(
-                name: 'holeNumber',
-                decoration: const InputDecoration(labelText: 'ホール番号'),
-                keyboardType: TextInputType.number,
-                validator: FormBuilderValidators.compose([
-                  FormBuilderValidators.required(errorText: 'ホール番号を入力してください'),
-                  FormBuilderValidators.numeric(errorText: '数値を入力してください'),
-                  FormBuilderValidators.min(1, errorText: '1以上の数値を入力してください'),
-                  FormBuilderValidators.max(18, errorText: '18以下の数値を入力してください'),
-                ]),
+              Text(
+                "ホール ${widget.hole.holeNumber}",
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
+              const SizedBox(height: 20),
               FormBuilderTextField(
                 name: 'par',
-                decoration: const InputDecoration(labelText: 'パー'),
+                decoration: const InputDecoration(
+                  labelText: 'パー',
+                  border: OutlineInputBorder(),
+                ),
                 keyboardType: TextInputType.number,
+                initialValue: widget.hole.par.toString(),
                 validator: FormBuilderValidators.compose([
                   FormBuilderValidators.required(errorText: 'パーを入力してください'),
-                  FormBuilderValidators.numeric(errorText: '数値を入力してください'),
+                  FormBuilderValidators.integer(errorText: '整数を入力してください'),
+                  FormBuilderValidators.min(3, errorText: '最低パーは3です'),
+                  FormBuilderValidators.max(5, errorText: '最高パーは5です'),
                 ]),
               ),
+              const SizedBox(height: 20),
               FormBuilderTextField(
                 name: 'yardage',
-                decoration: const InputDecoration(labelText: 'ヤーデージ'),
+                decoration: const InputDecoration(
+                  labelText: 'ヤーデージ',
+                  border: OutlineInputBorder(),
+                ),
                 keyboardType: TextInputType.number,
+                initialValue: widget.hole.yardage.toString(),
                 validator: FormBuilderValidators.compose([
                   FormBuilderValidators.required(errorText: 'ヤーデージを入力してください'),
-                  FormBuilderValidators.numeric(errorText: '数値を入力してください'),
+                  FormBuilderValidators.integer(errorText: '整数を入力してください'),
+                  FormBuilderValidators.min(100, errorText: 'ヤーデージは100以上です'),
                 ]),
               ),
             ],
@@ -91,37 +98,33 @@ class _EditHoleState extends State<EditHole> {
         isSubmitting = true;
       });
 
-      final data = _formKey.currentState!.value;
+      final formData = _formKey.currentState!.value;
+      final par = int.parse(formData['par']);
+      final yardage = int.parse(formData['yardage']);
 
-      // 更新されたホールを作成
-      final updatedHole = Hole(
+      // Holeオブジェクトを更新
+      Hole updatedHole = Hole(
         holeId: widget.hole.holeId,
         courseId: widget.hole.courseId,
-        holeNumber: int.parse(data['holeNumber']),
-        par: int.parse(data['par']),
-        yardage: int.parse(data['yardage']),
+        holeNumber: widget.hole.holeNumber,
+        par: par,
+        yardage: yardage,
       );
 
-      // API リクエストを実行
       try {
         final response = await apiHandler.updateHole(updatedHole);
-
         if (response.statusCode >= 200 && response.statusCode <= 299) {
-          // 成功
-          print("Hole updated successfully");
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('ホールが更新されました')),
           );
           Navigator.pop(context);
         } else {
-          // エラーが発生した場合
           print("Failed to update hole: ${response.statusCode}");
-          print("Error body: ${response.body}");
+          print("Response body: ${response.body}");
           _showErrorDialog("ホールの更新に失敗しました。再度お試しください。");
         }
       } catch (e) {
-        // ネットワークエラーなどをキャッチ
         print("Error updating hole: $e");
         _showErrorDialog("ホールの更新中にエラーが発生しました。接続を確認して再度お試しください。");
       } finally {

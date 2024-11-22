@@ -1,30 +1,32 @@
-class Course 
-{
-  final int courseId;
-  //final int userId;
-  final String courseName;
+import 'package:flutter_web_api/Models/hole_model.dart';
 
-  const Course({
+class Course {
+  final int? courseId;  // nullableに変更
+  String courseName;
+  List<Hole> holes;
+
+  Course({
     required this.courseId,
-    //required this.userId,
     required this.courseName,
+    required this.holes,
   });
 
-  const Course.empty({
-    this.courseId = 0,
-    //this.userId = 0,
-    this.courseName = '',
-  });
+  factory Course.fromJson(Map<String, dynamic> json) {
+    var holesFromJson = json['holes'] as List<dynamic>? ?? [];
+    List<Hole> holeList = holesFromJson.map((holeJson) => Hole.fromJson(holeJson)).toList();
 
-  factory Course.fromJson(Map<String, dynamic> json) => Course(
-        courseId: json['courseId'],
-        //userId: json['userId'],
-        courseName: json['courseName'],
-  );
-    
-   Map<String, dynamic> toJson()=>{
-        "courseId" : courseId,
-        //"userId" : userId,
-        "courseName" : courseName,
-   };
+    return Course(
+      courseId: json['courseId'], // nullableなので null を受け入れる
+      courseName: json['courseName'],
+      holes: holeList,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'courseId': courseId,
+      'courseName': courseName,
+      'holes': holes.map((hole) => hole.toJson()).toList(),
+    };
+  }
 }

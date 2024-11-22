@@ -1,39 +1,39 @@
-class Hole{
-  final int holeId;
-  final int courseId;
-  final int holeNumber;
-  final int par;
-  final int yardage;
+// lib/Models/hole_model.dart
+class Hole {
+  int? holeId; // nullableに変更
+  int courseId;
+  int holeNumber;
+  int par;
+  int yardage;
 
-  const Hole({
-    required this.holeId,
+  Hole({
+    this.holeId, // nullable
     required this.courseId,
     required this.holeNumber,
     required this.par,
     required this.yardage,
   });
 
-  const Hole.empty({
-    this.holeId = 0,
-    this.courseId = 0,
-    this.holeNumber = 0,
-    this.par = 0,
-    this.yardage = 0,
-  });
+  factory Hole.fromJson(Map<String, dynamic> json) {
+    return Hole(
+      holeId: json['holeId'],
+      courseId: json['courseId'],
+      holeNumber: json['holeNumber'],
+      par: json['par'],
+      yardage: json['yardage'],
+    );
+  }
 
-  factory Hole.fromJson(Map<String, dynamic> json) => Hole(
-    holeId: json['holeId'],
-    courseId: json['courseId'],
-    holeNumber: json['holeNumber'],
-    par: json['par'],
-    yardage: json['yardage'],
-  );
-
-  Map<String, dynamic> toJson()=>{
-    "holeId" : holeId,
-    "courseId" : courseId,
-    "holeNumber" : holeNumber,
-    "par" : par,
-    "yardage" : yardage,
-   };
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = {
+      'courseId': courseId,
+      'holeNumber': holeNumber,
+      'par': par,
+      'yardage': yardage,
+    };
+    if (holeId != null && holeId != 0) { // holeIdが存在する場合のみ追加
+      data['holeId'] = holeId;
+    }
+    return data;
+  }
 }
