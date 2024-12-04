@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_web_api/Models/user_model.dart';
-import 'package:flutter_web_api/Models/course_model.dart';
+import 'package:flutter_web_api/Models/round_model.dart';
 import 'package:flutter_web_api/Users/edit_page.dart';
 import 'package:flutter_web_api/Mains/api_handler.dart';
-import 'package:flutter_web_api/Course/course_detail.dart'; // CourseDetailをインポート
-import 'package:flutter_web_api/Course/add_course.dart'; // コース追加ページをインポート
-import 'package:flutter_web_api/Course/edit_course.dart'; // コース編集ページをインポート
+import 'package:flutter_web_api/Mains/round_handler.dart';
+import 'package:flutter_web_api/Rounds/add_round.dart';
+import 'package:flutter_web_api/Course/add_course.dart';
+import 'package:flutter_web_api/Course/edit_course.dart';
 
 class UserPage extends StatefulWidget {
   final User user;
@@ -17,43 +18,47 @@ class UserPage extends StatefulWidget {
 }
 
 class _UserPageState extends State<UserPage> {
+  RoundHandler roundHandler = RoundHandler();
   ApiHandler apiHandler = ApiHandler();
-  late List<Course> data = [];
+  late List<Round> rounds = [];
   bool isLoading = true;
+  String filterOption = "All"; // フィルタリングオプション
 
   @override
   void initState() {
     super.initState();
-    getCourses();
+    getRounds(); // ラウンドデータを取得
   }
 
-  void getCourses() async {
+  // ラウンドデータを取得する
+  void getRounds() async {
     setState(() {
-      isLoading = true; // データ取得中にローディングを表示
+      isLoading = true; // ローディング中
     });
-    data = await apiHandler.getCoursesByUserId(widget.user.userId);
+    rounds = await roundHandler.getRoundsByUserId(widget.user.userId);
     setState(() {
-      isLoading = false;
+      isLoading = false; // ローディング終了
     });
   }
 
-  void deleteCourse(int courseId) async {
-    final response = await apiHandler.deleteCourse(courseId);
+  // ラウンドデータの削除
+  void deleteRound(int roundId) async {
+    final response = await roundHandler.deleteRound(roundId);
     if (response.statusCode >= 200 && response.statusCode <= 299) {
-      // 成功時にリストを再取得
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Course deleted successfully!')),
+        const SnackBar(content: Text('Round deleted successfully!')),
       );
-      getCourses(); // コースのリストを再取得して更新
+      getRounds(); // データを再取得
     } else {
-      // エラーメッセージの表示
-      print("Failed to delete course: ${response.statusCode}");
-      _showErrorDialog("Failed to delete course. Please try again.");
+      _showErrorDialog(
+        "Failed to delete round: ${response.statusCode} - ${response.reasonPhrase}",
+      );
     }
   }
 
+  // エラーダイアログ
   void _showErrorDialog(String message) {
-    if (!mounted) return; // 追加: mountedチェック
+    if (!mounted) return;
     showDialog(
       context: context,
       builder: (context) {
@@ -73,6 +78,31 @@ class _UserPageState extends State<UserPage> {
     );
   }
 
+  // 並び替えロジック
+  List<Round> getFilteredRounds() {
+    if (filterOption == "All") {
+      return rounds;
+    } else if (filterOption == "Latest") {
+      return List.from(rounds)..sort((a, b) => b.roundDate.compareTo(a.roundDate));
+    } else if (filterOption == "Course") {
+      return List.from(rounds)..sort((a, b) => a.courseName.compareTo(b.courseName));
+    }
+    return rounds;
+  }
+
+  // ページ遷移メソッド
+  void navigateToAddRound() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddRound(userId: widget.user.userId),
+      ),
+    );
+    if (result != null) {
+      getRounds(); // ラウンド追加後に再取得
+    }
+  }
+
   void navigateToAddCourse() async {
     await Navigator.push(
       context,
@@ -80,126 +110,215 @@ class _UserPageState extends State<UserPage> {
         builder: (context) => AddCourse(userId: widget.user.userId),
       ),
     );
-    getCourses(); // コース追加後にリストを再取得
+    getRounds(); // コース追加後に再取得
   }
 
-  void navigateToEditCourse(Course course) async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => EditCoursePage(course: course),
-      ),
-    );
-    getCourses(); // コース編集後にリストを再取得
+  void navigateToEditCourse(Round round) async {
+    try {
+      // コースIDを使用して詳細を取得
+      final course = await apiHandler.getCourseById(round.courseId);
+
+      if (course != null) {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => EditCoursePage(course: course),
+          ),
+        );
+        getRounds(); // 編集後にラウンドを再取得
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to load course details.')),
+        );
+      }
+    } catch (e) {
+      print("Error navigating to edit course: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('An error occurred while editing the course.')),
+      );
+    }
   }
-
-  void navigateToCourseDetail(Course course) {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => CourseDetail(course: course),
-    ),
-  );
-}
-
 
   @override
   Widget build(BuildContext context) {
+    final filteredRounds = getFilteredRounds();
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.user.username), // 上部にユーザー名を表示
+        title: Text(
+          widget.user.username,
+          style: const TextStyle(color: Colors.white),
+        ),
         centerTitle: true,
         backgroundColor: const Color.fromARGB(255, 11, 11, 11),
-        foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: getRounds, // ラウンドデータのリフレッシュ
+          ),
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              setState(() {
+                filterOption = value;
+              });
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(value: "All", child: Text("All")),
+              const PopupMenuItem(value: "Latest", child: Text("Latest")),
+              const PopupMenuItem(value: "Course", child: Text("By Course")),
+            ],
+          ),
+        ],
+      ),
+      drawer: Drawer(
+        child: Column(
+          children: [
+            DrawerHeader(
+              decoration: const BoxDecoration(
+                color: Color.fromARGB(255, 11, 11, 11),
+              ),
+              child: Center(
+                child: Text(
+                  widget.user.username,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.info),
+              title: const Text('User Info'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EditPage(user: widget.user),
+                  ),
+                ).then((_) {
+                  getRounds(); // ユーザー情報更新後に再取得
+                });
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.add),
+              title: const Text('Add Course'),
+              onTap: () {
+                navigateToAddCourse();
+              },
+            ),
+            const Spacer(),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.popUntil(context, (route) => route.isFirst); // メインページに戻る
+                },
+                icon: const Icon(Icons.logout),
+                label: const Text("Logout"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12.0),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator()) // データを取得中はローディングインジケーターを表示
-          : Column(
-              children: [
-                ElevatedButton(
-                  onPressed: () {
-                    // EditPageへ遷移しユーザー情報を編集可能に
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => EditPage(user: widget.user),
-                      ),
-                    ).then((_) {
-                      // 編集から戻ってきたときにコースリストを再取得
-                      getCourses();
-                    });
-                  },
-                  child: const Text('User Info'),
-                ),
-                const SizedBox(height: 20),
-                Expanded(
-                  child: data.isEmpty
-                      ? const Center(
-                          child: Text("No courses found."),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.all(8),
-                          itemCount: data.length,
-                          itemBuilder: (context, index) {
-                            return Card(
-                              margin: const EdgeInsets.symmetric(vertical: 8),
-                              elevation: 3,
-                              child: ListTile(
-                                title: Text(data[index].courseName),
-                                onTap: () => navigateToCourseDetail(data[index]), // コースをタップすると詳細へ
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(Icons.edit, color: Colors.blue),
-                                      onPressed: () {
-                                        // EditCoursePageへ遷移してコース情報を編集可能に
-                                        navigateToEditCourse(data[index]);
-                                      },
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.delete, color: Colors.red),
-                                      onPressed: () {
-                                        // 確認ダイアログを表示してから削除
-                                        showDialog(
-                                          context: context,
-                                          builder: (BuildContext context) {
-                                            return AlertDialog(
-                                              title: const Text("Confirm Delete"),
-                                              content: const Text("Are you sure you want to delete this course?"),
-                                              actions: [
-                                                TextButton(
-                                                  onPressed: () {
-                                                    Navigator.of(context).pop();
-                                                  },
-                                                  child: const Text("Cancel"),
-                                                ),
-                                                TextButton(
-                                                  onPressed: () {
-                                                    Navigator.of(context).pop();
-                                                    deleteCourse(data[index].courseId!);
-                                                  },
-                                                  child: const Text("Delete", style: TextStyle(color: Colors.red)),
-                                                ),
-                                              ],
-                                            );
-                                          },
-                                        );
-                                      },
-                                    ),
-                                  ],
+          ? const Center(child: CircularProgressIndicator())
+          : filteredRounds.isEmpty
+              ? const Center(child: Text("No rounds found."))
+              : GridView.builder(
+                  padding: const EdgeInsets.all(8.0),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2, // 1行に2列を表示
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
+                    childAspectRatio: 0.9, // 枠の縦横比を小さくする
+                  ),
+                  itemCount: filteredRounds.length,
+                  itemBuilder: (context, index) {
+                    final round = filteredRounds[index];
+                    return GestureDetector(
+                      onTap: () => navigateToEditCourse(round),
+                      child: Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8), // 枠を角丸にする
+                        ),
+                        elevation: 3,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // 画像部分
+                            AspectRatio(
+                              aspectRatio: 16 / 9, // 画像を16:9の比率で表示
+                              child: ClipRRect(
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(8),
+                                  topRight: Radius.circular(8),
+                                ),
+                                child: Image.network(
+                                  round.imageUri,
+                                  fit: BoxFit.cover, // 画像を枠にフィットさせる
                                 ),
                               ),
-                            );
-                          },
+                            ),
+                            // テキスト部分
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          round.courseName,
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.delete, color: Colors.red),
+                                        onPressed: () {
+                                          deleteRound(round.roundId);
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    "Played on: ${round.roundDate.toLocal()}",
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
+                      ),
+                    );
+                  },
                 ),
-              ],
-            ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color.fromARGB(255, 11, 11, 11),
         foregroundColor: Colors.white,
-        onPressed: navigateToAddCourse, // コース追加ページへ遷移
+        onPressed: navigateToAddRound,
         child: const Icon(Icons.add),
       ),
     );

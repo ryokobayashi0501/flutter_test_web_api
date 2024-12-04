@@ -1,7 +1,11 @@
 import 'dart:convert';
 import 'package:flutter_web_api/Models/course_model.dart';
+import 'package:flutter_web_api/Models/DTOs/round_hole_dto_model.dart';
+import 'package:flutter_web_api/Models/round_hole_model.dart';
+import 'package:flutter_web_api/Models/round_model.dart';
+import 'package:flutter_web_api/Models/shot_model.dart';
 import 'package:flutter_web_api/Models/user_model.dart';
-import 'package:flutter_web_api/Models/users_model.dart';
+import 'package:flutter_web_api/Models/DTOs/users_model.dart';
 import 'package:flutter_web_api/Models/hole_model.dart';
 
 import 'package:http/http.dart' as http;
@@ -153,27 +157,58 @@ class ApiHandler {
     return user;
   }
 
-  Future<List<Course>> getCourseData() async {
-    List<Course> data = [];
-
-    final uri = Uri.parse(baseUri);
-    try {
-      final response = await http.get(
-        uri,
-        headers: <String, String>{
-          'Content-type': 'application/json; charset=UTF-8'
-        },
-      );
-
-      if (response.statusCode >= 200 && response.statusCode <= 299) {
-        final List<dynamic> jsonData = json.decode(response.body);
-        data = jsonData.map((json) => Course.fromJson(json)).toList();
-      }
-    } catch (e) {
-      return data;
+  Future<List<Course>> getAllCourses() async {
+  print("getAllCourses() called"); // デバッグ用
+  List<Course> courses = [];
+  final uri = Uri.parse("$baseUri/Courses");
+  try {
+    final response = await http.get(
+      uri,
+      headers: <String, String>{
+        'Content-type': 'application/json; charset=UTF-8'
+      },
+    );
+    print("Response status: ${response.statusCode}"); // デバッグ用
+    if (response.statusCode >= 200 && response.statusCode <= 299) {
+      final List<dynamic> jsonData = json.decode(response.body);
+      print("Received data: $jsonData"); // デバッグ用
+      courses = jsonData.map((json) => Course.fromJson(json)).toList();
+    } else {
+      print("Failed to fetch courses: ${response.statusCode}, ${response.reasonPhrase}");
     }
-    return data;
+  } catch (e) {
+    print("Error fetching courses: $e");
   }
+  print("getAllCourses() completed"); // デバッグ用
+  return courses;
+}
+
+
+
+
+  Future<Course?> getCourseById(int courseId) async {
+  final uri = Uri.parse("$baseUri/Courses/$courseId");
+  Course? course;
+
+  try {
+    final response = await http.get(
+      uri,
+      headers: {'Content-Type': 'application/json; charset=UTF-8'},
+    );
+
+    if (response.statusCode == 200) {
+      final jsonData = json.decode(response.body);
+      course = Course.fromJson(jsonData);
+    } else {
+      print("Failed to fetch course by ID: ${response.statusCode}");
+    }
+  } catch (e) {
+    print("Error fetching course by ID: $e");
+  }
+
+  return course;
+}
+
 
   Future<http.Response> addCourse(Course course) async { // Previously: {required User user}
     final uri = Uri.parse(baseUri);
@@ -220,7 +255,7 @@ class ApiHandler {
   }
 
   // コースを追加するAPI
-  Future<http.Response> addCourseForUser(int userId, String courseName, List<Hole> holes) async {
+  Future<http.Response> addCourseForUser(int userId, String courseName, List<Hole> holes, String imageUri) async {
   final uri = Uri.parse("$baseUri/Courses/user/$userId");
   late http.Response response;
 
@@ -228,6 +263,7 @@ class ApiHandler {
   Course newCourse = Course(
     courseId: null,
     courseName: courseName,
+    imageUri: imageUri, // 画像URIを設定
     holes: holes,
   );
 
@@ -236,10 +272,8 @@ class ApiHandler {
       uri,
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
-        // 必要に応じて認証トークンを追加する
-        //'Authorization': 'Bearer <your_access_token>',
       },
-      body: json.encode(newCourse.toJson()),
+      body: json.encode(newCourse.toJson()), // JSONデータを送信
     );
 
     if (response.statusCode == 201) {
@@ -255,6 +289,7 @@ class ApiHandler {
 
   return response;
 }
+
 
 
 
@@ -425,5 +460,342 @@ Future<http.Response> addHoleForCourse(int courseId, Hole hole) async {
 
     return response;
   }
+
+
+// Future<List<Round>> getRoundsByUserId(int userId) async {
+//   final uri = Uri.parse("$baseUri/Rounds/user/$userId/rounds");
+//   List<Round> rounds = [];
+
+//   try {
+//     final response = await http.get(
+//       uri,
+//       headers: {'Content-Type': 'application/json; charset=UTF-8'},
+//     );
+
+//     if (response.statusCode == 200) {
+//       final List<dynamic> jsonData = json.decode(response.body);
+//       print('Received JSON data: $jsonData'); // デバッグ用
+
+//       rounds = jsonData.map((json) => Round.fromJson(json)).toList();
+//       print('Parsed rounds: $rounds'); // デバッグ用
+//     } else {
+//       print("Failed to fetch rounds: ${response.statusCode}");
+//     }
+//   } catch (e) {
+//     print("Error fetching rounds: $e");
+//   } 
+//   return rounds;
+// }
+
+// Future<http.Response> deleteRound(int roundId) async {
+//   final uri = Uri.parse("$baseUri/Rounds/$roundId");
+//   late http.Response response;
+
+//   try {
+//     response = await http.delete(
+//       uri,
+//       headers: {'Content-Type': 'application/json; charset=UTF-8'},
+//     );
+//     if (response.statusCode >= 200 && response.statusCode <= 299) {
+//       print("Round deleted successfully.");
+//     } else {
+//       print("Failed to delete round: ${response.statusCode}");
+//     }
+//   } catch (e) {
+//     print("Error deleting round: $e");
+//     rethrow;
+//   }
+
+//   return response;
+// }
+
+// // ラウンドをユーザーに追加するAPI
+// // ラウンドをユーザーに追加するAPI
+// Future<http.Response> addRoundForUser(int userId, int courseId, List<Hole> holes) async {
+//   final uri = Uri.parse('$baseUri/Rounds');
+//   late http.Response response;
+
+//   try {
+//     // RoundHoles情報を作成
+//     List<Map<String, dynamic>> roundHoles = holes.map((hole) {
+//       return {
+//         "holeId": hole.holeId,
+//         "stroke": 0, // 初期値としてストローク数を0に設定
+//         "putts": 0,  // パット数を0に設定
+//         "penaltyStrokes": 0, // ペナルティを0に設定
+//         "fairwayHit": false, // フェアウェイヒットの初期値
+//         "greenInRegulation": false // GIRの初期値
+//       };
+//     }).toList();
+
+//     // リクエストボディを作成
+//     Map<String, dynamic> requestBody = {
+//       "userId": userId,
+//       "courseId": courseId,
+//       "roundDate": DateTime.now().toIso8601String(), // 必要であれば日付を追加
+//       "roundHoles": roundHoles, // RoundHolesフィールドを含める
+//     };
+
+//     response = await http.post(
+//       uri,
+//       headers: {'Content-Type': 'application/json; charset=UTF-8'},
+//       body: json.encode(requestBody),
+//     );
+
+//     if (response.statusCode == 201) {
+//       print("Round added successfully.");
+//     } else {
+//       print("Failed to add round: ${response.statusCode}");
+//       print("Response body: ${response.body}");
+//     }
+//   } catch (e) {
+//     print("Error adding round: $e");
+//     rethrow;
+//   }
+
+//   return response;
+// }
+
+
+
+
+// Future<void> addRoundHoleForUser(int userId, int roundId, int holeId) async {
+//   final uri = Uri.parse('$baseUri/users/$userId/rounds/$roundId/holes/$holeId');
+
+//   // リクエストボディを作成（RoundHoleの追加）
+//   Map<String, dynamic> requestBody = {
+//     "stroke": 0, // 初期値としてストローク数を0に設定
+//     "putts": 0,  // パット数も0に設定
+//     "penaltyStrokes": 0, // ペナルティストロークを0に設定
+//     "fairwayHit": false, // 初期値としてフェアウェイヒットをfalseに設定
+//     "greenInRegulation": false // 初期値としてGIRをfalseに設定
+//   };
+
+//   try {
+//     final response = await http.post(
+//       uri,
+//       headers: {'Content-Type': 'application/json; charset=UTF-8'},
+//       body: json.encode(requestBody),
+//     );
+
+//     if (response.statusCode == 201) {
+//       print("RoundHole added successfully for holeId: $holeId");
+//     } else {
+//       print("Failed to add RoundHole: ${response.statusCode}");
+//       print("Response body: ${response.body}");
+//     }
+//   } catch (e) {
+//     print("Error adding RoundHole for holeId $holeId: $e");
+//     rethrow;
+//   }
+// }
+
+
+// // RoundHole を追加するメソッド
+
+
+//   // RoundId から RoundHoles を取得するメソッド
+//   Future<List<RoundHole>> getRoundHolesByRoundId(int roundId) async {
+//     final uri = Uri.parse("$baseUri/RoundHoles/round/$roundId");
+//     List<RoundHole> roundHoles = [];
+
+//     try {
+//       final response = await http.get(
+//         uri,
+//         headers: {'Content-Type': 'application/json; charset=UTF-8'},
+//       );
+
+//       if (response.statusCode == 200) {
+//         final List<dynamic> jsonData = json.decode(response.body);
+//         roundHoles = jsonData.map((json) => RoundHole.fromJson(json)).toList();
+//       } else {
+//         print("Failed to fetch RoundHoles: ${response.statusCode}");
+//         print("Response body: ${response.body}");
+//       }
+//     } catch (e) {
+//       print("Error fetching RoundHoles: $e");
+//     }
+
+//     return roundHoles;
+//   }
+
+//   // RoundHole を更新するメソッド
+//   Future<http.Response> updateRoundHole(RoundHole roundHole) async {
+//     final uri = Uri.parse("$baseUri/RoundHoles/${roundHole.roundHoleId}");
+//     late http.Response response;
+
+//     try {
+//       response = await http.put(
+//         uri,
+//         headers: {'Content-Type': 'application/json; charset=UTF-8'},
+//         body: json.encode(roundHole.toJson()),
+//       );
+
+//       if (response.statusCode == 204) {
+//         print("RoundHole updated successfully.");
+//       } else {
+//         print("Failed to update RoundHole: ${response.statusCode}");
+//         print("Response body: ${response.body}");
+//       }
+//     } catch (e) {
+//       print("Error updating RoundHole: $e");
+//       rethrow;
+//     }
+
+//     return response;
+//   }
+
+//   // RoundHole を削除するメソッド
+//   Future<http.Response> deleteRoundHole(int roundHoleId) async {
+//     final uri = Uri.parse("$baseUri/RoundHoles/$roundHoleId");
+//     late http.Response response;
+
+//     try {
+//       response = await http.delete(
+//         uri,
+//         headers: {'Content-Type': 'application/json; charset=UTF-8'},
+//       );
+
+//       if (response.statusCode == 204) {
+//         print("RoundHole deleted successfully.");
+//       } else {
+//         print("Failed to delete RoundHole: ${response.statusCode}");
+//         print("Response body: ${response.body}");
+//       }
+//     } catch (e) {
+//       print("Error deleting RoundHole: $e");
+//       rethrow;
+//     }
+
+//     return response;
+//   }
+
+//   // RoundHoleId から Shots を取得するメソッド
+//   Future<List<Shot>> getShotsByRoundHoleId(int roundHoleId) async {
+//     final uri = Uri.parse("$baseUri/Shots/roundHole/$roundHoleId");
+//     List<Shot> shots = [];
+
+//     try {
+//       final response = await http.get(
+//         uri,
+//         headers: {'Content-Type': 'application/json; charset=UTF-8'},
+//       );
+
+//       if (response.statusCode == 200) {
+//         final List<dynamic> jsonData = json.decode(response.body);
+//         shots = jsonData.map((json) => Shot.fromJson(json)).toList();
+//       } else {
+//         print("Failed to fetch Shots: ${response.statusCode}");
+//         print("Response body: ${response.body}");
+//       }
+//     } catch (e) {
+//       print("Error fetching Shots: $e");
+//     }
+
+//     return shots;
+//   }
+
+//   // Shot を更新するメソッド
+//   Future<http.Response> updateShot(Shot shot) async {
+//     final uri = Uri.parse("$baseUri/Shots/${shot.shotId}");
+//     late http.Response response;
+
+//     try {
+//       response = await http.put(
+//         uri,
+//         headers: {'Content-Type': 'application/json; charset=UTF-8'},
+//         body: json.encode(shot.toJson()),
+//       );
+
+//       if (response.statusCode == 204) {
+//         print("Shot updated successfully.");
+//       } else {
+//         print("Failed to update Shot: ${response.statusCode}");
+//         print("Response body: ${response.body}");
+//       }
+//     } catch (e) {
+//       print("Error updating Shot: $e");
+//       rethrow;
+//     }
+
+//     return response;
+//   }
+
+//   // Shot を削除するメソッド
+//   Future<http.Response> deleteShot(int shotId) async {
+//     final uri = Uri.parse("$baseUri/Shots/$shotId");
+//     late http.Response response;
+
+//     try {
+//       response = await http.delete(
+//         uri,
+//         headers: {'Content-Type': 'application/json; charset=UTF-8'},
+//       );
+
+//       if (response.statusCode == 204) {
+//         print("Shot deleted successfully.");
+//       } else {
+//         print("Failed to delete Shot: ${response.statusCode}");
+//         print("Response body: ${response.body}");
+//       }
+//     } catch (e) {
+//       print("Error deleting Shot: $e");
+//       rethrow;
+//     }
+
+//     return response;
+//   }
+
+//   Future<http.Response> addRoundHole(int userId, int roundId, int holeId, RoundHoleDto roundHoleDto) async {
+//   final uri = Uri.parse('$baseUri/users/$userId/rounds/$roundId/holes/$holeId');
+
+//   late http.Response response;
+
+//   try {
+//     response = await http.post(
+//       uri,
+//       headers: {'Content-Type': 'application/json; charset=UTF-8'},
+//       body: json.encode(roundHoleDto.toJson()),
+//     );
+
+//     if (response.statusCode == 201) {
+//       print("RoundHole added successfully.");
+//     } else {
+//       print("Failed to add RoundHole: ${response.statusCode}");
+//       print("Response body: ${response.body}");
+//     }
+//   } catch (e) {
+//     print("Error adding RoundHole: $e");
+//     rethrow;
+//   }
+
+//   return response;
+// }
+
+//   // Shot を追加するメソッド
+//   Future<http.Response> addShot(int userId, int roundId, int holeId, int roundHoleId, Shot shot) async {
+//     final uri = Uri.parse('$baseUri/users/$userId/rounds/$roundId/holes/$holeId/roundHoles/$roundHoleId/shots');
+//     late http.Response response;
+
+//     try {
+//       response = await http.post(
+//         uri,
+//         headers: {'Content-Type': 'application/json; charset=UTF-8'},
+//         body: json.encode(shot.toJson()),
+//       );
+
+//       if (response.statusCode == 201) {
+//         print("Shot added successfully.");
+//       } else {
+//         print("Failed to add Shot: ${response.statusCode}");
+//         print("Response body: ${response.body}");
+//       }
+//     } catch (e) {
+//       print("Error adding Shot: $e");
+//       rethrow;
+//     }
+
+//     return response;
+//   }
 
 }

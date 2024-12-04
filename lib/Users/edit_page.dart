@@ -19,33 +19,41 @@ class _EditPageState extends State<EditPage> {
   late http.Response response;
 
   void UpdateDatta() async {
-    if (_formKey.currentState!.saveAndValidate()) {
-      final data = _formKey.currentState!.value;
+  if (_formKey.currentState!.saveAndValidate()) {
+    final data = _formKey.currentState!.value;
 
-      final user = User(
-        userId: widget.user.userId,
-        name: data['name'],
-        username: data['username'],
-        email: data['email'], //change address to email
-        yearsOfExperience: int.parse(data['yearsOfExperience']),
-        averageScore: int.parse(data['averageScore']),
-        practiceFrequency: int.parse(data['practiceFrequency']),
-        scoreGoal: int.parse(data['scoreGoal']),
-        puttingGoal: data['puttingGoal'],
-        approachGoal: data['approachGoal'],
-        shotGoal: data['shotGoal'],
-        passwordHash: data['passwordHash']
+    final user = User(
+      userId: widget.user.userId,
+      name: data['name'],
+      username: data['username'],
+      email: data['email'],
+      yearsOfExperience: int.parse(data['yearsOfExperience']),
+      averageScore: int.parse(data['averageScore']),
+      practiceFrequency: int.parse(data['practiceFrequency']),
+      scoreGoal: int.parse(data['scoreGoal']),
+      puttingGoal: double.parse(data['puttingGoal']),
+      approachGoal: data['approachGoal'],
+      shotGoal: data['shotGoal'],
+      passwordHash: data['passwordHash'],
+    );
+
+    final response = await apiHandler.updateUser(
+      userId: widget.user.userId,
+      user: user,
+    );
+
+    if (response.statusCode >= 200 && response.statusCode <= 299) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User updated successfully!')),
       );
-
-      response = await apiHandler.updateUser(
-        userId: widget.user.userId,
-        user: user,
+    } else {
+      print("Error: ${response.statusCode} - ${response.body}");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update user: ${response.statusCode}')),
       );
     }
-
-    if (!mounted) return;
-    Navigator.pop(context);
   }
+}
 
   @override
   Widget build(BuildContext context) {
