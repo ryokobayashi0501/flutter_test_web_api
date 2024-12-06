@@ -98,4 +98,3 @@ class ShotDto {
     return json.encode(toJson());
   }
 }
-
