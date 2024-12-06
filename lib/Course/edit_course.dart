@@ -172,7 +172,7 @@ class _EditCoursePageState extends State<EditCoursePage> {
           onPressed: isSubmitting ? null : updateCourse,
           child: isSubmitting
               ? const CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  valueColor: AlwaysStoppedAnimation<Color>(Color.fromARGB(255, 236, 6, 6)),
                 )
               : const Text('コースを更新'),
         ),
