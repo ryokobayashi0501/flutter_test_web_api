@@ -43,6 +43,8 @@ class _AddShotState extends State<AddShot> {
   String weatherCondition = "Clear";
   bool _isSaving = false; // データ保存中かどうかを管理するフラグ
   bool _isHoleDataSaved = false; // ホールデータが保存されたかどうかを管理するフラグ
+  // ここでholeShotsを定義する
+  Map<int, List<Map<String, dynamic>>> holeShots = {}; // 各ホールのショットデータを保持する
 
   @override
   void initState() {
@@ -93,11 +95,20 @@ class _AddShotState extends State<AddShot> {
                     return GestureDetector(
                       onTap: () {
                         setState(() {
-                          currentHoleIndex = index;
-                          _generateShots();
-                          _isHoleDataSaved = false; // ホールを変更したときに、保存済みフラグをリセット
+                        // 現在のホールのデータを保存
+                          holeShots[currentHoleIndex] = List<Map<String, dynamic>>.from(shots);
+
+                        // 新しいホールに移動
+                        currentHoleIndex = index;
+
+                              // 新しいホールのデータを生成またはロード
+                        _generateShots();
+
+                            // 保存済みフラグをリセット
+                        _isHoleDataSaved = false;
                         });
                       },
+
                       child: Padding(
                         padding: const EdgeInsets.all(4.0),
                         child: CircleAvatar(
@@ -200,37 +211,115 @@ class _AddShotState extends State<AddShot> {
       ),
     );
   }
+  
+void _addPenaltyShot({required int adjustedShotNumber, required bool isOB}) {
+  setState(() {
+    if (isOB) {
+      // OBの場合、次のショットは+2の打数を追加し、ショットの番号を適切に更新
+      int currentShotIndex = adjustedShotNumber - 1;
+
+      // OBのためのペナルティショットを追加 (shotNumberが元のショット番号を飛ばして+2)
+      shots.insert(currentShotIndex + 1, {
+        'shotNumber': adjustedShotNumber + 2, // OB後の次のショット
+        'type': 'shot',
+        'distance': '',
+        'remainingDistance': '',
+        'clubUsed': null,
+        'ballDirection': null,
+        'shotType': null,
+        'ballHeight': null,
+        'lie': shots[currentShotIndex]['lie'], // OBの場合は同じ場所から打つ
+        'shotResult': null,
+        'notes': 'OBの後のショット',
+      });
+    } else {
+      // ペナルティエリアの場合のショット追加処理
+      int currentShotIndex = adjustedShotNumber - 1;
+
+      shots.insert(currentShotIndex + 1, {
+        'shotNumber': adjustedShotNumber + 1, // ペナルティ後の次のショット
+        'type': 'shot',
+        'distance': '',
+        'remainingDistance': '',
+        'clubUsed': null,
+        'ballDirection': null,
+        'shotType': null,
+        'ballHeight': null,
+        'lie': Lie.Rough, // ペナルティエリアの後はラフから打つ
+        'shotResult': null,
+        'notes': 'ペナルティエリアからのショット',
+      });
+    }
+
+    // OBまたはペナルティショットの後に他のショットがある場合、番号を適切に再割り当て
+    _renumberShots();
+  });
+}
+
+void _renumberShots() {
+  // ショット番号を全体的に再調整するメソッド
+  int shotNumber = 1;
+
+  for (int i = 0; i < shots.length; i++) {
+    if (shots[i]['type'] == 'shot' || shots[i]['type'] == 'putt' || shots[i]['type'] == 'tee') {
+      shots[i]['shotNumber'] = shotNumber;
+      shotNumber++;
+    }
+  }
+}
 
 
-  // ショットの入力フォームを生成
-  void _generateShots() {
+ // ショットを自動生成するメソッド (更新済み)
+void _generateShots() {
+  if (!_isHoleDataSaved) {
     shots.clear();
     int totalShots = score;
     int puttStartIndex = totalShots - putts + 1;
 
     for (int shotIndex = 1; shotIndex <= totalShots; shotIndex++) {
-      String shotType = (shotIndex == 1) ? 'tee' : (shotIndex >= puttStartIndex && putts > 0) ? 'putt' : 'shot';
+      String shotType = (shotIndex == 1)
+          ? 'tee'
+          : (shotIndex >= puttStartIndex && putts > 0)
+              ? 'putt'
+              : 'shot';
+
       shots.add({
         'shotNumber': shotIndex,
         'type': shotType,
         'distance': '',
         'remainingDistance': (shotIndex == totalShots && shotType == 'putt') ? '0' : '',
-        'clubUsed': shotType == 'putt' ? ClubUsed.Putter : ClubUsed.Driver, 
-        'ballDirection': (shotIndex == totalShots && shotType == 'putt') ? BallDirection.Holed : null,
-        'shotType': shotType == 'putt' ? PuttType.StraightPutt : ShotType.Straight,
-        'puttType': shotType == 'putt' ? PuttType.StraightPutt : null, // ここでputtTypeを初期化
+        'clubUsed': shotType == 'putt' ? ClubUsed.Putter : null,
+        'ballDirection': null,
+        'shotType': shotType == 'putt' ? PuttType.StraightPutt : null,
+        'puttType': shotType == 'putt' ? PuttType.StraightPutt : null,
         'ballHeight': shotType == 'putt' ? BallHeight.Default : null,
         'lie': shotType == 'tee' ? Lie.Tee : (shotType == 'putt' ? Lie.Green : null),
-        'shotResult': (shotIndex == totalShots && shotType == 'putt') ? PuttResult.PuttHoled : ShotResult.Perfect,
+        'shotResult': null,
         'notes': '',
       });
     }
+
+    // 保存済みデータをholeShotsに保存
+    holeShots[currentHoleIndex] = List<Map<String, dynamic>>.from(shots);
+  } else {
+    // 保存されたデータをロードする
+    shots = List<Map<String, dynamic>>.from(holeShots[currentHoleIndex]!);
   }
+}
 
   // ショットごとの入力フォームを生成
 Widget _buildShotInputForm(Map<String, dynamic> shot) {
   bool isPutter = shot['type'] == 'putt';
   bool isTeeShot = shot['type'] == 'tee';
+
+  // 次のショットがパットかどうかを判定
+  // 現在のショットのインデックスを取得
+  int currentIndex = shots.indexOf(shot);
+  bool nextShotIsPutt = false;
+  if (currentIndex < shots.length - 1) {
+    // 次のショットが存在する場合、そのショットがputtかどうかを確認
+    nextShotIsPutt = (shots[currentIndex + 1]['type'] == 'putt');
+  }
 
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -256,9 +345,13 @@ Widget _buildShotInputForm(Map<String, dynamic> shot) {
         },
       ),
       // Remaining Distance
+      // パットの場合またはパット直前の場合はfeet、それ以外はyards
       if (!isPutter || shot['shotNumber'] != shots.length)
         TextFormField(
-          decoration: InputDecoration(labelText: 'Remaining Distance (${isPutter ? "feet" : "yards"})'),
+          decoration: InputDecoration(
+            // ここでnextShotIsPuttを用いて単位をfeetにするかyardsにするかを判断
+            labelText: 'Remaining Distance (${(isPutter || nextShotIsPutt) ? "feet" : "yards"})',
+          ),
           keyboardType: TextInputType.number,
           initialValue: shot['remainingDistance'],
           validator: (String? value) {
@@ -303,24 +396,98 @@ Widget _buildShotInputForm(Map<String, dynamic> shot) {
 
 
 
+//bool isPutter = shot['type'] == 'putt'; // shot['type']やclubUsedなどでisPutterを判定
 
-      // Ball Direction
-      DropdownButtonFormField<BallDirection>(
-        decoration: const InputDecoration(labelText: 'Ball Direction'),
-        value: shot['ballDirection'] as BallDirection?,
-        onChanged: (BallDirection? value) {
-          setState(() {
-            shot['ballDirection'] = value;
-            _updateRoundHoleDataAfterBallDirectionSelection(shot['shotNumber'], value);
-          });
-        },
-        items: BallDirection.values.map((BallDirection direction) {
-          return DropdownMenuItem<BallDirection>(
-            value: direction,
-            child: Text(direction.toString().split('.').last),
-          );
-        }).toList(),
-      ),
+DropdownButtonFormField<Enum>(
+  decoration: const InputDecoration(labelText: 'Ball Direction'),
+  // valueを現在の状態に合わせてEnum型にキャスト
+  value: shot['ballDirection'] as Enum?,
+  onChanged: (Enum? value) {
+    setState(() {
+      shot['ballDirection'] = value;
+
+      // Score、Puttsから初期状態に戻す
+      _generateShots();
+
+      // 現在のShotを取得
+      int currentIndex = shots.indexWhere((s) => s['shotNumber'] == shot['shotNumber']);
+      var currentShot = shots.firstWhere(
+        (s) => s['shotNumber'] == shot['shotNumber'],
+        orElse: () => <String, dynamic>{},
+      );
+
+      if (currentShot.isEmpty) return;
+
+      currentShot['ballDirection'] = value;
+
+      if (value != null) {
+        // Puttの場合はPuttBallDirection、通常ショットはBallDirectionで条件分岐
+        if (isPutter && value is PuttBallDirection) {
+          // PuttBallDirectionに応じた処理
+          switch (value) {
+            case PuttBallDirection.ShortofHole:
+              currentShot['lie'] = Lie.Green;
+              break;
+            // 他のPuttBallDirectionケース
+            default:
+              currentShot['lie'] = Lie.Green;
+          }
+        } else if (!isPutter && value is BallDirection) {
+          // 通常ショットのBallDirectionに応じた処理
+          switch (value) {
+            case BallDirection.Fairway:
+              currentShot['lie'] = Lie.Fairway;
+              break;
+            case BallDirection.LeftOB:
+            case BallDirection.RightOB:
+              {
+                int idx = shots.indexOf(currentShot);
+                if (idx + 1 < shots.length) {
+                  shots.removeAt(idx + 1);
+                }
+                if (idx + 1 < shots.length) {
+                  shots[idx + 1]['lie'] = Lie.Tee;
+                }
+                break;
+              }
+            case BallDirection.WaterHazardLeft:
+            case BallDirection.WaterHazardRight:
+            case BallDirection.WaterHazardFront:
+              {
+                int idx = shots.indexOf(currentShot);
+                if (idx + 1 < shots.length) {
+                  shots.removeAt(idx + 1);
+                }
+                if (idx + 1 < shots.length) {
+                  shots[idx + 1]['lie'] = Lie.Rough;
+                }
+                break;
+              }
+            // 他のBallDirectionケース
+            default:
+              currentShot['lie'] = null;
+          }
+        }
+      }
+    });
+  },
+  items: isPutter
+    ? PuttBallDirection.values.map((PuttBallDirection direction) {
+        return DropdownMenuItem<Enum>(
+          value: direction,
+          child: Text(direction.toString().split('.').last),
+        );
+      }).toList()
+    : BallDirection.values.map((BallDirection direction) {
+        return DropdownMenuItem<Enum>(
+          value: direction,
+          child: Text(direction.toString().split('.').last),
+        );
+      }).toList(),
+),
+
+
+
       // Shot Type
       DropdownButtonFormField(
         decoration: const InputDecoration(labelText: 'Shot Type'),
@@ -372,28 +539,29 @@ Widget _buildShotInputForm(Map<String, dynamic> shot) {
         items: _getLieItemsForShot(shot),
       ),
       // Shot Result
-DropdownButtonFormField<Enum>(
-  decoration: const InputDecoration(labelText: 'Shot Result'),
-  value: shot['shotResult'],
-  onChanged: (Enum? value) {
-    setState(() {
-      shot['shotResult'] = value;
-    });
-  },
-  items: isPutter
-      ? PuttResult.values.map((PuttResult type) {
-          return DropdownMenuItem<Enum>(
-            value: type,
-            child: Text(type.toString().split('.').last),
-          );
-        }).toList()
-      : ShotResult.values.map((ShotResult type) {
-          return DropdownMenuItem<Enum>(
-            value: type,
-            child: Text(type.toString().split('.').last),
-          );
-        }).toList(),
-),
+      DropdownButtonFormField<Enum>(
+        decoration: const InputDecoration(labelText: 'Shot Result'),
+        value: shot['shotResult'] as Enum?,
+        onChanged: (Enum? value) {
+         setState(() {
+           shot['shotResult'] = value;
+         });
+        },
+        items: isPutter
+         ? PuttResult.values.map((PuttResult type) {
+              return DropdownMenuItem<Enum>(
+               value: type,
+               child: Text(type.toString().split('.').last),
+              );
+            }).toList()
+         : ShotResult.values.map((ShotResult type) {
+             return DropdownMenuItem<Enum>(
+                value: type,
+               child: Text(type.toString().split('.').last),
+              );
+          }).toList(),
+      ),
+
 
       // Notes
       TextFormField(
@@ -454,25 +622,72 @@ DropdownButtonFormField<Enum>(
     }
   }
 
-  void _updateRoundHoleDataAfterBallDirectionSelection(int shotNumber, BallDirection? ballDirection) {
-    // Tee Shot の場合
-    if (shotNumber == 1 && ballDirection == BallDirection.Fairway) {
-      setState(() {
-        // Fairway Hit を更新
-        // ラウンドホールのオブジェクトを更新する
-        // TODO: Implement round hole fairway hit state here
-      });
-    }
-    // それ以外のケース
-    else if (ballDirection == BallDirection.LeftOB || ballDirection == BallDirection.RightOB) {
-      setState(() {
-        // Penalty Strokesに2加算
-        // TODO: Implement penalty strokes addition here
-      });
-    }
-    // 他のビジネスロジックに応じた処理を追加する
-    // TODO: Add more business logic based on different BallDirection values
+  void _updateRoundHoleFields(RoundHoleDto roundHoleDto) {
+  int? par = widget.holes[currentHoleIndex].par;
+  if (par == null) {
+    // パーの情報がない場合は処理を終了
+    return;
   }
+
+  // 初期化
+  roundHoleDto.penaltyStrokes = 0;
+  roundHoleDto.bunkerShotsCount = 0;
+  roundHoleDto.scrambleAttempted = false;
+  roundHoleDto.scrambleSuccess = false;
+  roundHoleDto.fairwayHit = false;
+  roundHoleDto.greenInRegulation = false;
+  roundHoleDto.bunkerRecovery = null;
+
+  // 各ショット情報からRoundHoleを更新
+  for (var shot in shots) {
+    // フェアウェイヒットの更新（ティーショットのみ）
+    if (shot['shotNumber'] == 1 && shot['ballDirection'] == BallDirection.Fairway) {
+      roundHoleDto.fairwayHit = true;
+    }
+
+    // OB の場合、ペナルティストロークを追加
+    if (shot['ballDirection'] == BallDirection.LeftOB || shot['ballDirection'] == BallDirection.RightOB) {
+      roundHoleDto.penaltyStrokes = (roundHoleDto.penaltyStrokes ?? 0) + 2;
+    } else if (shot['ballDirection'] == BallDirection.WaterHazardLeft || shot['ballDirection'] == BallDirection.WaterHazardRight || shot['ballDirection'] == BallDirection.WaterHazardFront) {
+      roundHoleDto.penaltyStrokes = (roundHoleDto.penaltyStrokes ?? 0) + 1;
+    }
+
+    // バンカーショットのカウント
+    if (shot['ballDirection'] == BallDirection.SandBunkerLeft || shot['ballDirection'] == BallDirection.SandBunkerRight) {
+      roundHoleDto.bunkerShotsCount = (roundHoleDto.bunkerShotsCount ?? 0) + 1;
+    }
+  }
+
+  // パーオンの更新
+  int totalStrokes = shots.length;
+  int totalPutts = putts;
+  if ((totalStrokes - totalPutts) <= (par - 2)) {
+    roundHoleDto.greenInRegulation = true;
+  } else {
+    roundHoleDto.greenInRegulation = false;
+    roundHoleDto.scrambleAttempted = true;
+  }
+
+  // スクランブルの更新
+  if (roundHoleDto.scrambleAttempted == true && totalStrokes <= par) {
+    roundHoleDto.scrambleSuccess = true;
+}
+
+
+  // バンカーからのリカバリーの処理
+  for (int i = 1; i < shots.length; i++) {
+    var previousShot = shots[i - 1];
+    var currentShot = shots[i];
+    if ((previousShot['ballDirection'] == BallDirection.SandBunkerLeft || previousShot['ballDirection'] == BallDirection.SandBunkerRight) && currentShot['remainingDistance'] <= 50) {
+      if (currentShot['ballDirection'] == BallDirection.Green && totalPutts == 1) {
+        roundHoleDto.bunkerRecovery = true;
+      } else {
+        roundHoleDto.bunkerRecovery = false;
+      }
+    }
+  }
+}
+
 
   void _submitHole() async {
   if (!_formKey.currentState!.validate()) {
@@ -520,6 +735,9 @@ DropdownButtonFormField<Enum>(
       );
       return;
     }
+
+     // ショット情報からRoundHoleを更新
+    //_updateRoundHoleFields(RoundHoleDto);
 
     // 各ショットをサーバーに送信（ショット情報をまとめて保存する）
     List<ShotDto> newShotDtos = shots.map((shot) {
@@ -592,6 +810,11 @@ DropdownButtonFormField<Enum>(
       return;
     }
 
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Hole data saved successfully')),
+    );
+
+    // 保存成功時の処理
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Hole data saved successfully')),
     );
