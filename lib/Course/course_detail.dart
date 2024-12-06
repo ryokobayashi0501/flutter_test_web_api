@@ -135,7 +135,7 @@ class _CourseDetailState extends State<CourseDetail> {
                                   _showErrorDialog("ホールIDが存在しません。");
                                 }
                               },
-                                color: Colors.red,
+                                color: const Color.fromARGB(255, 10, 10, 10),
                             ),
                           ],
                         ),
