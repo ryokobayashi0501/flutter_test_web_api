@@ -40,7 +40,7 @@ class _AddCourseState extends State<AddCourse> {
       appBar: AppBar(
         title: const Text("Add Course"),
         centerTitle: true,
-        backgroundColor: Colors.green,
+        backgroundColor: const Color.fromARGB(255, 5, 5, 5),
       ),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(8.0),

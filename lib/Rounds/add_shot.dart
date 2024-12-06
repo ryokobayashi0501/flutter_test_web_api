@@ -244,7 +244,7 @@ class _AddShotState extends State<AddShot> {
     );
   }
 
-
+//
 
   // ショットごとの入力フォームを生成
 int get puttStartIndex => score - putts + 1;

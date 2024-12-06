@@ -23,6 +23,8 @@ class RoundHoleDto {
     this.scrambleSuccess,
   });
 
+  
+
   Map<String, dynamic> toJson() {
     return {
       'stroke': stroke,
