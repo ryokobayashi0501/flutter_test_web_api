@@ -146,56 +146,58 @@ class _AddCourseState extends State<AddCourse> {
   }
 
   void addCourse() async {
-    if (_formKey.currentState?.saveAndValidate() ?? false) {
-      setState(() {
-        isSubmitting = true;
-      });
+  if (_formKey.currentState?.saveAndValidate() ?? false) {
+    setState(() {
+      isSubmitting = true;
+    });
 
-      final formData = _formKey.currentState!.value;
-      final courseName = formData['courseName'];
+    final formData = _formKey.currentState!.value;
+    final courseName = formData['courseName'];
+    const String imageUri = "https://source.unsplash.com/300x200/?golf"; // 固定の画像URIを設定
 
-      try {
-        // Add course
-        final response = await apiHandler.addCourseForUser(widget.userId, courseName, holes);
-        if (response.statusCode == 201) {
-          // Get the course ID
-          final Map<String, dynamic> responseData = json.decode(response.body);
-          final int courseId = responseData['courseId'];
+    try {
+      // Add course
+      final response = await apiHandler.addCourseForUser(widget.userId, courseName, holes, imageUri);
+      if (response.statusCode == 201) {
+        // Get the course ID
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        final int courseId = responseData['courseId'];
 
-          // Retrieve and update hole information
-          for (int i = 0; i < holes.length; i++) {
-            final par = int.parse(formData['par_$i']);
-            final yardage = int.parse(formData['yardage_$i']);
+        // Retrieve and update hole information
+        for (int i = 0; i < holes.length; i++) {
+          final par = int.parse(formData['par_$i']);
+          final yardage = int.parse(formData['yardage_$i']);
 
-            holes[i].courseId = courseId;
-            holes[i].par = par;
-            holes[i].yardage = yardage;
+          holes[i].courseId = courseId;
+          holes[i].par = par;
+          holes[i].yardage = yardage;
 
-            await apiHandler.addHoleForCourse(courseId, holes[i]);
-          }
-
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Course added successfully')),
-          );
-          Navigator.pop(context);
-        } else {
-          print("Failed to add course: ${response.statusCode}");
-          print("Response body: ${response.body}");
-          _showErrorDialog("Failed to add course, please try again.");
+          await apiHandler.addHoleForCourse(courseId, holes[i]);
         }
-      } catch (e) {
-        print("Error adding course: $e");
-        _showErrorDialog("An error occurred while adding the course. Please check your connection and try again.");
-      } finally {
-        setState(() {
-          isSubmitting = false;
-        });
+
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Course added successfully')),
+        );
+        Navigator.pop(context);
+      } else {
+        print("Failed to add course: ${response.statusCode}");
+        print("Response body: ${response.body}");
+        _showErrorDialog("Failed to add course, please try again.");
       }
-    } else {
-      _showErrorDialog("Please correct the errors in the form.");
+    } catch (e) {
+      print("Error adding course: $e");
+      _showErrorDialog("An error occurred while adding the course. Please check your connection and try again.");
+    } finally {
+      setState(() {
+        isSubmitting = false;
+      });
     }
+  } else {
+    _showErrorDialog("Please correct the errors in the form.");
   }
+}
+
 
   void _showErrorDialog(String message) {
     if (!mounted) return;
