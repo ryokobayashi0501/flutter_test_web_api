@@ -164,7 +164,7 @@ class _EditCoursePageState extends State<EditCoursePage> {
       appBar: AppBar(
         title: const Text("コース編集"),
         centerTitle: true,
-        backgroundColor: Colors.orange,
+        backgroundColor: const Color.fromARGB(255, 243, 9, 9),
       ),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(8.0),
