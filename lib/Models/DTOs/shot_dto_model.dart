@@ -41,21 +41,35 @@ class ShotDto {
   factory ShotDto.fromJson(Map<String, dynamic> json) {
     Enum getShotTypeFromJson() {
       if (json['shotTypeName'] == 'PuttType') {
-        return PuttType.values.firstWhere((e) => e.toString().split('.').last == json['shotType']);
+        return PuttType.values.firstWhere(
+          (e) => e.toString().split('.').last == json['shotType'],
+          orElse: () => PuttType.Straight,
+        );
       } else if (json['shotTypeName'] == 'ShotType') {
-        return ShotType.values.firstWhere((e) => e.toString().split('.').last == json['shotType']);
+        return ShotType.values.firstWhere(
+          (e) => e.toString().split('.').last == json['shotType'],
+          orElse: () => ShotType.Straight,
+        );
       } else {
-        throw ArgumentError("Invalid shotTypeName: ${json['shotTypeName']}");
+        print("Invalid shotTypeName: ${json['shotTypeName']}");
+        return ShotType.Straight; // Default
       }
     }
 
     Enum getShotResultFromJson() {
       if (json['shotResultName'] == 'PuttResult') {
-        return PuttResult.values.firstWhere((e) => e.toString().split('.').last == json['shotResult']);
+        return PuttResult.values.firstWhere(
+          (e) => e.toString().split('.').last == json['shotResult'],
+          orElse: () => PuttResult.PuttHoled,
+        );
       } else if (json['shotResultName'] == 'ShotResult') {
-        return ShotResult.values.firstWhere((e) => e.toString().split('.').last == json['shotResult']);
+        return ShotResult.values.firstWhere(
+          (e) => e.toString().split('.').last == json['shotResult'],
+          orElse: () => ShotResult.Perfect,
+        );
       } else {
-        throw ArgumentError("Invalid shotResultName: ${json['shotResultName']}");
+        print("Invalid shotResultName: ${json['shotResultName']}");
+        return ShotResult.Perfect; // Default
       }
     }
 
@@ -84,17 +98,23 @@ class ShotDto {
       'clubUsed': clubUsed.toString().split('.').last,
       'ballDirection': ballDirection.toString().split('.').last,
       'shotType': shotType.toString().split('.').last,
-      'shotTypeName': shotType is PuttType ? 'PuttType' : 'ShotType',
+      'shotTypeName': shotType.runtimeType == PuttType ? 'PuttType' : 'ShotType',
       'ballHeight': ballHeight.toString().split('.').last,
       'lie': lie.toString().split('.').last,
       'shotResult': shotResult.toString().split('.').last,
-      'shotResultName': shotResult is PuttResult ? 'PuttResult' : 'ShotResult',
+      'shotResultName': shotResult.runtimeType == PuttResult ? 'PuttResult' : 'ShotResult',
       'notes': notes,
     };
   }
 
-  // Debugging utility to convert ShotDto to JSON string format
-  String toJsonString() {
-    return json.encode(toJson());
+  // Helper function to parse JSON string into a list of ShotDto objects
+  static List<ShotDto> listFromJson(String jsonString) {
+    try {
+      final List<dynamic> jsonData = json.decode(jsonString);
+      return jsonData.map((json) => ShotDto.fromJson(json)).toList();
+    } catch (e) {
+      print("Error parsing JSON to ShotDto list: $e");
+      return [];
+    }
   }
 }

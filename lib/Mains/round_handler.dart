@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter_web_api/Models/DTOs/shot_dto_model.dart';
+import 'package:flutter_web_api/Models/Enums/PuttType.dart';
 import 'package:flutter_web_api/Models/course_model.dart';
 import 'package:flutter_web_api/Models/DTOs/round_hole_dto_model.dart';
 import 'package:flutter_web_api/Models/round_hole_model.dart';
@@ -101,34 +102,9 @@ Future<http.Response> addRoundForUser(int userId, int courseId) async {
 
 
 
-  // // ユーザーにRoundHoleを追加するメソッド
-  // Future<http.Response> addRoundHoleForUser(int userId, int roundId, int holeId, RoundHoleDto roundHoleDto) async {
-  //   final uri = Uri.parse('$baseUri/users/$userId/rounds/$roundId/holes/$holeId');
-  //   late http.Response response;
-
-  //   try {
-  //     response = await http.post(
-  //       uri,
-  //       headers: {'Content-Type': 'application/json; charset=UTF-8'},
-  //       body: json.encode(roundHoleDto.toJson()),
-  //     );
-
-  //     if (response.statusCode == 201) {
-  //       print("RoundHole added successfully.");
-  //     } else {
-  //       print("Failed to add RoundHole: ${response.statusCode}");
-  //       print("Response body: ${response.body}");
-  //     }
-  //   } catch (e) {
-  //     print("Error adding RoundHole: $e");
-  //     rethrow;
-  //   }
-  //   return response;
-  // }
-
   // RoundIDからRoundHolesを取得するメソッド
-  Future<List<RoundHole>> getRoundHolesByRoundId(int userId, int roundId) async {
-    final uri = Uri.parse("$baseUri/users/$userId/rounds/$roundId/holes");
+  Future<List<RoundHole>> getRoundHolesByRoundId(int userId, int roundId, int holeId) async {
+    final uri = Uri.parse("$baseUri/users/$userId/rounds/$roundId/holes/$holeId");
     List<RoundHole> roundHoles = [];
 
     try {
@@ -150,6 +126,41 @@ Future<http.Response> addRoundForUser(int userId, int courseId) async {
 
     return roundHoles;
   }
+
+  Future<List<RoundHole>> getRoundHolesForUser(int userId, int roundId) async {
+  final uri = Uri.parse("$baseUri/users/$userId/rounds/$roundId/holes");
+  List<RoundHole> roundHoles = [];
+
+  try {
+    // Send GET request to the API
+    final response = await http.get(
+      uri,
+      headers: {'Content-Type': 'application/json; charset=UTF-8'},
+    );
+
+    if (response.statusCode == 200) {
+      print("Response body: ${response.body}");
+      try {
+        // Parse JSON response to a list of RoundHole objects
+        final List<dynamic> jsonData = json.decode(response.body);
+        roundHoles = jsonData.map((json) => RoundHole.fromJson(json)).toList();
+      } catch (e) {
+        print("JSON parsing error: $e");
+      }
+    } else {
+      // Handle error response
+      print("Failed to fetch RoundHoles: ${response.statusCode}");
+      print("Response body: ${response.body}");
+    }
+  } catch (e) {
+    // Handle exceptions
+    print("Error fetching RoundHoles: $e");
+  }
+
+  // Return the list of RoundHole objects
+  return roundHoles;
+}
+
 
 // RoundHole の取得メソッド
   Future<http.Response> getRoundHoleForUser(int userId, int roundId, int holeId) async {
@@ -297,4 +308,51 @@ Future<http.Response> updateRoundHoleForUser(int userId, int roundId, int holeId
     // Return the list of shots
     return shots;
   }
+
+Future<List<ShotDto>> getShotsByRoundId(int userId, int roundId) async {
+  // final uri = Uri.parse("http://10.0.2.2:7287/api/users/$userId/rounds/$roundId/shots");
+    final uri = Uri.parse("$baseUri/Shots/users/$userId/rounds/$roundId/shots");
+
+  List<ShotDto> shots = [];
+
+  try {
+    final response = await http.get(
+      uri,
+      headers: {'Content-Type': 'application/json; charset=UTF-8'},
+    );
+
+    if (response.statusCode == 200) {
+      print("Response body: ${response.body}");
+
+      try {
+        final List<dynamic> jsonData = json.decode(response.body);
+        print("Parsed JSON: $jsonData");
+
+
+        // for(var shot in shots){
+        //                 shot.shotType = PuttType.Straight;
+
+        //   switch(shot.shotTypeName){
+        //     case "Straight":
+        //       shot.shotType = PuttType.Straight;
+              
+        //   }
+        // }
+
+        shots = jsonData.map((json) => ShotDto.fromJson(json)).toList();
+      } catch (e) {
+        print("JSON parsing error: $e");
+      }
+    } else {
+      print("Failed to fetch shots: ${response.statusCode}");
+      print("Response body: ${response.body}");
+    }
+  } catch (e) {
+    print("Error fetching shots: $e");
+  }
+
+  return shots;
+}
+
+
 }

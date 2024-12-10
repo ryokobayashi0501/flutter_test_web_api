@@ -1,10 +1,10 @@
 enum PuttType {
-  StraightPutt,
-  BreakingToRightPutt,
-  BreakingToLeftPutt,
-  LagPutt,
-  DownhillPutt,
-  UphillPutt,
-  ShortPut,
+  Straight,
+  BreakingToRight,
+  BreakingToLeft,
+  Lag,
+  Downhill,
+  Uphill,
+  Short,
 }
 

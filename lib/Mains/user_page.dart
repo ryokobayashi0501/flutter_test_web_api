@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_web_api/Models/DTOs/shot_dto_model.dart';
+import 'package:flutter_web_api/Models/round_hole_model.dart';
 import 'package:flutter_web_api/Models/user_model.dart';
 import 'package:flutter_web_api/Models/round_model.dart';
+import 'package:flutter_web_api/Rounds/golf_stats%20.dart';
 import 'package:flutter_web_api/Users/edit_page.dart';
 import 'package:flutter_web_api/Mains/api_handler.dart';
 import 'package:flutter_web_api/Mains/round_handler.dart';
@@ -139,6 +142,97 @@ class _UserPageState extends State<UserPage> {
     }
   }
 
+
+  // ラウンド詳細画面へのナビゲーション
+void navigateToGolfStats(Round round) async {
+  try {
+  final List<ShotDto> shots = await roundHandler.getShotsByRoundId(widget.user.userId, round.roundId);
+  final List<Map<String, dynamic>> shotData = shots.map((shot) => shot.toJson()).toList();
+  // RoundHolesデータの取得
+    final List<RoundHole> roundHoles = await roundHandler.getRoundHolesForUser(widget.user.userId, round.roundId);
+    final List<Map<String, dynamic>> roundHoleData = roundHoles.map((hole) => hole.toJson()).toList();
+
+  // データが空の場合のエラーハンドリング
+  if (shotData.isEmpty || roundHoleData.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("No data found for this round.")),
+    );
+    return;
+  }
+
+  if (!mounted) return;
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => GolfStats(
+        shotData: shotData,
+        roundHoleData: roundHoleData,
+      ),
+    ),
+  );
+  } catch (e) {
+    // エラー発生時のハンドリング
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Failed to load data: $e")),
+    );
+  }
+}
+
+
+
+// 全ラウンドの統計データを計算してウィジェットを生成
+Widget buildStatsHeader() {
+  if (rounds.isEmpty) {
+    print("Rounds data is empty.");
+    return const SizedBox();
+  }
+
+  // デバッグ用ログ
+  print("Rounds: ${rounds.map((round) => round.toJson()).toList()}");
+
+  // 全ラウンドの統計情報を集計
+  int totalScore = rounds.fold<int>(
+      0, (sum, round) => sum + round.roundHoles.fold<int>(0, (holeSum, hole) => holeSum + hole.stroke));
+  int totalFairways = rounds.fold<int>(
+      0, (sum, round) => sum + round.roundHoles.where((hole) => hole.fairwayHit).length);
+  int totalGreens = rounds.fold<int>(
+      0, (sum, round) => sum + round.roundHoles.where((hole) => hole.greenInRegulation).length);
+
+  if (rounds.isEmpty || totalFairways == 0 || totalGreens == 0) {
+    return const Text("No statistics available.");
+  }
+
+  double fairwayHitRate = totalFairways /
+          rounds.fold<int>(0, (sum, round) => sum + round.roundHoles.length) *
+          100;
+  double greenInRegulationRate = totalGreens /
+          rounds.fold<int>(0, (sum, round) => sum + round.roundHoles.length) *
+          100;
+
+  return Padding(
+    padding: const EdgeInsets.all(8.0),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Total Score: $totalScore",
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        Text(
+          "Fairway Hit %: ${fairwayHitRate.toStringAsFixed(1)}%",
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        Text(
+          "Green in Regulation %: ${greenInRegulationRate.toStringAsFixed(1)}%",
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+      ],
+    ),
+  );
+}
+
+
   @override
   Widget build(BuildContext context) {
     final filteredRounds = getFilteredRounds();
@@ -247,7 +341,7 @@ class _UserPageState extends State<UserPage> {
                   itemBuilder: (context, index) {
                     final round = filteredRounds[index];
                     return GestureDetector(
-                      onTap: () => navigateToEditCourse(round),
+                      onTap: () => navigateToGolfStats(round),
                       child: Card(
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8), // 枠を角丸にする
